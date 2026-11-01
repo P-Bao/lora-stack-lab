@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import numpy as np
+import torch
 from datasets import load_dataset
 from torch.utils.data import DataLoader, Dataset
 
@@ -53,10 +54,18 @@ class CausalLMDataset(Dataset):
         return {"input_ids": ids, "attention_mask": attn, "labels": labels}
 
 
+def _fixed_len_collate(feats: list[dict]) -> dict[str, torch.Tensor]:
+    """All sequences are exactly seq_len -> plain stack; guarantees tensors (default_collate
+    returns lists for variable-length batches, which breaks batch.to(device))."""
+    keys = feats[0].keys()
+    return {k: torch.tensor([f[k] for f in feats], dtype=torch.long) for k in keys}
+
+
 def make_train_loader(cfg, tokenizer) -> DataLoader:
     ds, p_col, a_col = _load_raw(cfg.data.name, cfg.data.subset_size)
     wrapped = CausalLMDataset(ds, p_col, a_col, tokenizer, cfg.data.seq_len)
-    return DataLoader(wrapped, batch_size=cfg.batch_size, shuffle=True, drop_last=True, num_workers=2)
+    return DataLoader(wrapped, batch_size=cfg.batch_size, shuffle=True, drop_last=True,
+                      num_workers=2, collate_fn=_fixed_len_collate)
 
 
 def make_gora_probe_loader(cfg, tokenizer, n_batches: int):
@@ -64,7 +73,8 @@ def make_gora_probe_loader(cfg, tokenizer, n_batches: int):
     ds, p_col, a_col = _load_raw(cfg.data.name, cfg.data.subset_size)
     head = ds.select(range(min(n_batches * cfg.batch_size, len(ds))))
     wrapped = CausalLMDataset(head, p_col, a_col, tokenizer, cfg.data.seq_len)
-    return DataLoader(wrapped, batch_size=cfg.batch_size, shuffle=False, drop_last=True)
+    return DataLoader(wrapped, batch_size=cfg.batch_size, shuffle=False, drop_last=True,
+                      collate_fn=_fixed_len_collate)
 
 
 def load_eval_prompts(name: str, size: int):
