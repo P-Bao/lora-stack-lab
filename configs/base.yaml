@@ -6,9 +6,6 @@ gralora_k: 2
 target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
 gora_n_batches: 64
 altlora_momentum: 0.9
-balora_lambda1: 0.025
-balora_lambda2: 0.005
-balora_lambda3: 0.005
 epochs: 1.0
 batch_size: 8
 grad_accum: 4
