@@ -6,24 +6,27 @@ cd "$(dirname "$0")/.."
 python -m pip install --quiet -r requirements-kaggle.txt
 # Kaggle image ships torchao 0.10.0; peft >=0.19 RAISES on old torchao even when unused
 # (is_torchao_available raises instead of returning False). pip uninstall refuses
-# outside-environment dists (/usr/lib/python3/dist-packages) -> remove files directly.
+# outside-environment dists (/usr/lib/python3/dist-packages) -> sweep ALL sys.path dirs.
 python - <<'PY'
-import importlib.util as iu, pathlib, shutil, sys
+import importlib, importlib.util as iu, pathlib, shutil, sys
+removed = []
+for sp in list(sys.path):
+    if not sp:
+        continue
+    spp = pathlib.Path(sp)
+    if not spp.is_dir():
+        continue
+    for d in spp.glob("torchao*"):  # package dir, dist-info, egg-info, egg-link, .pth
+        if d.is_dir():
+            shutil.rmtree(d, ignore_errors=True)
+        else:
+            d.unlink(missing_ok=True)
+        removed.append(str(d))
+importlib.invalidate_caches()
 spec = iu.find_spec("torchao")
-if spec is None:
-    print("[bootstrap] torchao absent - OK")
-else:
-    for loc in (spec.submodule_search_locations or []):
-        print("[bootstrap] removing", loc); shutil.rmtree(loc, ignore_errors=True)
-    if spec.origin:
-        pathlib.Path(spec.origin).unlink(missing_ok=True)
-    for sp in sys.path:
-        if sp and (spp := pathlib.Path(sp)).is_dir():
-            for d in spp.glob("torchao-*.dist-info"):
-                shutil.rmtree(d, ignore_errors=True)
-    if iu.find_spec("torchao") is not None:
-        sys.exit("[bootstrap] FATAL: torchao still importable after removal")
-    print("[bootstrap] torchao removed")
+if spec is not None:
+    sys.exit(f"[bootstrap] FATAL: torchao still importable at {spec.origin} after removing {removed}")
+print(f"[bootstrap] torchao: removed {len(removed)} entries, now absent - OK")
 PY
 python tests/test_env.py            # exits non-zero on version mismatch — queue never starts on wrong env
 python - <<'PY'
