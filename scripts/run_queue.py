@@ -19,7 +19,8 @@ def find_configs(stage: str | None, ids: list[str]) -> list[Path]:
     all_yml = sorted(exp_dir.glob("*.yaml"))
     if ids:
         want = set(ids)
-        return [p for p in all_yml if p.stem in want or any(p.stem.startswith(w) for w in want)]
+        # config stem is a PREFIX of the full experiment ID (E0-SMOKE-L -> E0-SMOKE-L-qwen05b-...)
+        return [p for p in all_yml if p.stem in want or any(w.startswith(p.stem) for w in want)]
     if stage:
         return [p for p in all_yml if p.stem.startswith(f"{stage}-")]
     return all_yml
@@ -46,7 +47,11 @@ def main() -> int:
     ap.add_argument("--skip-from", nargs="*", default=[], help="dirs (old outputs mounted as input) to scan for done IDs")
     args = ap.parse_args()
 
+    os.makedirs(args.out, exist_ok=True)  # collect_results needs the dir even with 0 runs
     todo = [p for p in find_configs(args.stage, args.ids) if p.stem not in done_ids([args.out, *args.skip_from])]
+    if not todo:
+        print(f"[run_queue] NOTHING matched (stage={args.stage!r}, ids={args.ids}) "
+              f"— available: {[p.stem for p in find_configs(args.stage, [])] or find_configs(None, [])}")
     print(f"[run_queue] {len(todo)} to run: {[p.stem for p in todo]}")
     gpu_cycle = itertools.cycle(["0", "1"])
     running: dict[subprocess.Popen, str] = {}
