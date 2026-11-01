@@ -76,6 +76,14 @@ def build(cfg: ExpConfig):
     if "O" in components:
         get_hooks("O").patch_config(cfg, peft_cfg, ctx)  # L: rank_pattern; G: group-budget + deviation
     if "Bp" in components:
+        if isinstance(peft_cfg, GraloraConfig):
+            # GraloraConfig has no init_lora_weights (peft_inventory) — PiSSA init for G layers
+            # is NOT available via PEFT; stage 5 must decide: custom pissa-for-gralora module or
+            # documented deviation. Fail loud instead of silently losing the init (X1).
+            raise NotImplementedError(
+                "Bp (PiSSA init) + G: GraloraConfig has no init_lora_weights in peft "
+                f"{__import__('peft').__version__}; needs custom pissa_init for GraLoRA (see decisions.md D-X1b)"
+            )
         peft_cfg.init_lora_weights = "pissa"  # PEFT public API; modifies W_res (X1)
         ctx.init_mode = "pissa"
     model = get_peft_model(model, peft_cfg)
