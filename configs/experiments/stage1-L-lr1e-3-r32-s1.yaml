@@ -1,0 +1,4 @@
+# Stage 1 L* LR sweep: r=32, seed 1 (plan.md section 7). Pick best, then add seeds 2-3.
+exp_id: stage1-L-lr1e-3-r32-s1
+components: [L]
+lr: 1e-3

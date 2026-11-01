@@ -11,6 +11,7 @@ cells = [
         "import os, subprocess, sys\n",
         "\n",
         "BRANCH  = \"main\"                # <- change per stage\n",
+        "STAGE   = \"stage0\"               # <- stage prefix of configs/experiments/ (stage1, stage2-*)\n",
         "REPO    = \"P-Bao/lora-stack-lab\"  # public repo\n",
         "COMMIT  = None                    # <- optional: pin exact commit for reproduction\n",
         "RUN_IDS = []                      # <- empty = run whole stage from configs/experiments/\n",
@@ -25,7 +26,7 @@ cells = [
         "sys.path.insert(0, \"/tmp/repo/src\")"]},
     {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [
         "ids = \" \".join(RUN_IDS)\n",
-        "sh(f\"python scripts/run_queue.py --stage {BRANCH.split('/')[0]} --ids {ids} \"\n",
+        "sh(f\"python scripts/run_queue.py --stage {STAGE} --ids {ids} \"\n",
         "   f\"--out /kaggle/working/results --ckpt /kaggle/working/ckpt \"\n",
         "   f\"--skip-from /kaggle/input\")  # scans previous outputs mounted as input to skip done IDs"]},
     {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [

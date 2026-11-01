@@ -43,6 +43,15 @@ python tests/test_env.py   # gate: exit 1 nếu lệch bản ghim
 
 KHÔNG ghim torch: Kaggle preinstall ~2.x build đúng ABI NCCL/CUDA của image; `pip install torch` lại phá ABI (xem comment đầu `requirements-kaggle.txt`).
 
+### Trạng thái sau Gate 0 (2026-11-01): ĐÃ SMOKE-TEST TRÊN KAGGLE — chốt cứng
+
+- Kaggle image: python 3.13.15, torch 2.11.0+cu128, 2×T4 14.6 GiB — `peft==0.21.2` + `transformers==4.57.6` cài + chạy OK, `test_env.py` pass.
+- **Bẫy 1 (đã ghi vào bootstrap):** image có sẵn `torchao` 0.10.0 ở `/usr/lib/python3/dist-packages`; peft ≥0.19 **raise** thay vì bỏ qua khi thấy torchao cũ — `pip uninstall` không gỡ được (outside-environment) → bootstrap quét xoá mọi `torchao*` trong mọi `sys.path` dir.
+- **Bẫy 2:** `LoraConfig`/`get_peft_model` gọi dispatcher chuỗi có `is_torchao_available()` tính trước `isinstance` — xoá torchao là bắt buộc, không có cách bypass qua config.
+- Bẫy 3 (PyYAML): `2e-4` đọc thành str — `ExpConfig.from_dict` ép kiểu theo annotation (fix 829af68).
+- Bẫy 4: default_collate trả list cho batch → collate tường minh trong loaders.py (fix 7fa8872).
+- Cảnh báo xung đột gradio/diffusers vs huggingface-hub 0.36.2: chỉ ảnh hưởng widget UI, bỏ qua.
+
 ---
 
 ## D-X2 — G+O: ngân sách rank khi GraloraConfig không hỗ trợ rank theo lớp
