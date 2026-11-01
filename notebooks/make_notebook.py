@@ -1,0 +1,38 @@
+"""Generates notebooks/kaggle_runner.ipynb (thin: bootstrap + run_queue + collect)."""
+import json
+from pathlib import Path
+
+cells = [
+    {"cell_type": "markdown", "metadata": {}, "source": [
+        "# lora-stack-lab Kaggle runner\n",
+        "Set `BRANCH`/`REPO`, enable **Internet** in notebook settings, run **Save & Run All (Commit)**.\n",
+        "Outputs: `results/` JSONs + `ckpt/` (small) + `results_pack.zip` for manual download."]},
+    {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [
+        "import os, subprocess, sys\n",
+        "\n",
+        "BRANCH  = \"stage0/harness\"        # <- change per stage\n",
+        "REPO    = \"USER/lora-stack-lab\"   # <- fill with the public repo (USER)\n",
+        "COMMIT  = None                    # <- optional: pin exact commit for reproduction\n",
+        "RUN_IDS = []                      # <- empty = run whole stage from configs/experiments/\n",
+        "\n",
+        "sh = lambda c: subprocess.run(c, shell=True, check=True)\n",
+        "sh(f\"git clone --depth 1 --branch {BRANCH} https://github.com/{REPO}.git /tmp/repo\")\n",
+        "if COMMIT:\n",
+        "    sh(f\"cd /tmp/repo && git fetch --depth 1 origin {COMMIT} && git checkout {COMMIT}\")\n",
+        "os.chdir(\"/tmp/repo\")\n",
+        "sh(\"bash scripts/bootstrap_kaggle.sh\")\n",
+        "sys.path.insert(0, \"/tmp/repo/src\")"]},
+    {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [
+        "ids = \" \".join(RUN_IDS)\n",
+        "sh(f\"python scripts/run_queue.py --stage {BRANCH.split('/')[0]} --ids {ids} \"\n",
+        "   f\"--out /kaggle/working/results --ckpt /kaggle/working/ckpt \"\n",
+        "   f\"--skip-from /kaggle/input\")  # scans previous outputs mounted as input to skip done IDs"]},
+    {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [
+        "sh(\"python scripts/collect_results.py --src /kaggle/working/results --zip /kaggle/working/results_pack.zip\")"]},
+]
+nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+                                   "language_info": {"name": "python", "version": "3.10"}},
+      "nbformat": 4, "nbformat_minor": 4}
+out = Path(__file__).parent / "kaggle_runner.ipynb"
+out.write_text(json.dumps(nb, indent=1), encoding="utf-8")
+print(f"wrote {out}")

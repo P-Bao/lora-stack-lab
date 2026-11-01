@@ -1,0 +1,10 @@
+# Gate 0 smoke: 50 steps, L only, Qwen2.5-0.5B fp16 — no NaN, eval runs, JSON written.
+exp_id: E0-SMOKE-L-qwen05b-lr2e-4-r32-s1
+components: [L]
+max_steps: 50
+data:
+  name: metamathqa
+  subset_size: 2000
+  seq_len: 512
+  eval_name: gsm8k
+  eval_size: 20

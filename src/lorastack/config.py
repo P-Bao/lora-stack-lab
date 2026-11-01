@@ -66,19 +66,32 @@ class ExpConfig:
     ckpt_dir: str = "ckpt"
 
     @classmethod
-    def from_yaml(cls, path: str) -> "ExpConfig":
-        with open(path, "r", encoding="utf-8") as f:
-            raw = yaml.safe_load(f) or {}
+    def from_dict(cls, raw: dict) -> "ExpConfig":
+        raw = dict(raw or {})
         data_raw = raw.pop("data", None)
         known = {f.name for f in fields(cls)}
-        filtered = {k: v for k, v in raw.items() if k in known}
-        cfg = cls(**filtered)
+        cfg = cls(**{k: v for k, v in raw.items() if k in known})
         if data_raw:
             cfg.data = DataConfig(**{k: v for k, v in data_raw.items() if k in {f.name for f in fields(DataConfig)}})
         return cfg
 
-    def dump(self, path: str) -> None:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    @classmethod
+    def from_yaml(cls, path: str, base: Optional[dict] = None) -> "ExpConfig":
+        with open(path, "r", encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+        merged = {**(base or {}), **raw}
+        return cls.from_dict(merged)
+
+    def dump(self, path: Optional[str] = None) -> dict:
+        d: dict[str, Any] = {}
+        for f in fields(self):
+            v = getattr(self, f.name)
+            d[f.name] = v if f.name != "data" else {ff.name: getattr(v, ff.name) for ff in fields(DataConfig)}
+        if path is not None:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(d, f, sort_keys=False)
+        return d
         d: dict[str, Any] = {}
         for f in fields(self):
             v = getattr(self, f.name)
