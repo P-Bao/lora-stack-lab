@@ -64,7 +64,7 @@ def main() -> int:
                 code = p.poll()
                 if code is not None:
                     failures += int(code != 0)
-                    print(f"[run_queue] {Path(p.args[2]).stem} exit={code}")
+                    print(f"[run_queue] {Path(p.args[3]).stem} exit={code}")
                     running.pop(p)
             if not running:
                 break

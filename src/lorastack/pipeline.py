@@ -65,7 +65,7 @@ def build(cfg: ExpConfig):
         tok.pad_token = tok.eos_token
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model_name,
-        torch_dtype=torch.float16 if cfg.fp16 else torch.float32,
+        dtype=torch.float16 if cfg.fp16 else torch.float32,  # "torch_dtype" deprecated in transformers 4.57
         attn_implementation="sdpa",  # T4: no flash-attn
     )
     if cfg.gradient_checkpointing:
