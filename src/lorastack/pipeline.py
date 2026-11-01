@@ -59,9 +59,10 @@ def build(cfg: ExpConfig):
     ctx = AdapterContext(exp_id=cfg.exp_id, components=components, rank=cfg.rank)
 
     # 1. rank allocation (O): streaming N-batch gradient pre-pass on the BASE model
+    if "O" in components or "Oi" in components:
+        ctx.probe_loader = make_gora_probe_loader(cfg, tok, cfg.gora_n_batches)
     if "O" in components:
-        probe = make_gora_probe_loader(cfg, tok, cfg.gora_n_batches)
-        ctx.layer_ranks = get_hooks("O").allocate_ranks(cfg, model, tok, probe)
+        ctx.layer_ranks = get_hooks("O").allocate_ranks(cfg, model, tok, ctx.probe_loader)
 
     # 2. adapter build (L | G)
     if "G" in components:
@@ -131,6 +132,7 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
     start_step = load_ckpt(cfg.ckpt_dir, cfg.exp_id, model, optimizer) or 0
     steps_per_epoch = len(loader) // cfg.grad_accum
     total_steps = cfg.max_steps if cfg.max_steps > 0 else int(steps_per_epoch * cfg.epochs)
+    ctx.total_steps, ctx.step = total_steps, start_step
     global_step, curve, t0 = start_step, [], time.time()
     model.train()
 
@@ -163,6 +165,7 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
         scaler.step(optimizer)
         scaler.update()
         global_step += 1
+        ctx.step = global_step
 
         if global_step % 10 == 0:
             curve.append({"step": global_step, "loss": round(running / cfg.grad_accum, 4)})
