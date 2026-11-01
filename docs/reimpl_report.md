@@ -27,9 +27,21 @@ Sau merge main: **29/29 unit test pass** (torch 2.13 CPU + peft 0.20.0 local; ph
 
 *(điền sau khi verify-agent báo — V1/V2/V3, kèm danh sách DEFERRED sang Kaggle session đầu)*
 
-## Kết quả review
+## Kết quả review (cavecrew-reviewer, diff 7cc106d..HEAD, 2019 dòng)
 
-*(điền sau khi reviewer báo — findings + trạng thái xử lý)*
+**3 🔴 — đã sửa + test bổ sung (tests/unit/test_pipeline_groups.py):**
+1. `pipeline._adamw_groups`: B params bị loại KHỎI optimizer khi `lr_ratio_ba=1.0` (mọi run AdamW chỉ train lora_A) → group B giờ LUÔN được thêm; segment-matching (`{"lora_B","gralora_B"} & set(name.split("."))`) thay vì substring.
+2. `gralora_B` không bao giờ khớp `startswith` (tên thật có prefix `base_model.model.`) → cùng fix trên.
+3. `_pissa_snapshot` không sống qua resume (CR của Bp tắt im lặng sau TimeGuard-resume) → snapshot được pin ngay trong `build()` sau `get_peft_model` (PiSSA init là SVD deterministic → session mới tái tạo đúng A0/B0).
+
+**3 🟡 — đã sửa:**
+4. `balora` schedule `warmup_ratio=0` → ZeroDivisionError → guard `w > 0`.
+5. GoRA probe đặt requires_grad trên toàn model (+1–3 GB transient) + không try/finally → freeze non-targets + try/finally restore.
+6. `balora` student forward chạy dù cả 3 λ=0 (+50% step time) → early return `{}`.
+
+**Đã kiểm và SẠCH:** X3 slice mapping (einsum đối chiếu peft layer), NOTE 9.11 (pattern key full-path match được), D-X1b, fp32-islands/ridge (không rò dtype), AltLoRA cache/parity, các D-002.1/2/5/6, D-X2.
+
+Chạy lại toàn bộ: **32/32 pass** (29 cũ + 3 contract test mới).
 
 ## Các độ lệch triển khai so với spec/paper (chốt)
 
