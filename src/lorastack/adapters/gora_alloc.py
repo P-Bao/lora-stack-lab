@@ -8,7 +8,7 @@ any global loss scale cancels in the normalized importance (spec 3.1).
 
 Phase (b): I(W)=avg(|W⊙G|) fp32 [Eq.(5)], advantage A_i=I_i/ΣI [Eq.(6)],
 budget B_tot = Σ(m+n)·r_ref [Eq.(7), (m+n) form per decisions.md D-002.5],
-r_i = clip(round(B_tot·A_i/(m+n)), r_min, r_max) [Eq.(8)] with r_min=r_ref/2, r_max=4·r_ref
+r_i = clip(floor(B_tot·A_i/(m+n)), r_min, r_max) [Eq.(8), FLOOR per black-box V2-C/D + D-003] with r_min=r_ref/2, r_max=4·r_ref
 [paper B.3]; one deterministic budget-rescale round when clamp drift > 10% (spec 9.7 / D-002.6).
 """
 from __future__ import annotations
@@ -128,7 +128,7 @@ def _allocate_ranks_from_importance(importance: dict[str, float],
         out = {}
         for name, (m, n) in shapes.items():
             raw = budget * advantage[name] / (m + n)
-            out[name] = int(min(r_max, max(r_min, math.floor(raw + 0.5))))  # round half-up
+            out[name] = int(min(r_max, max(r_min, math.floor(raw))))  # floor — matches author behavior (black-box V2-C/D, D-003)
         return out
 
     ranks = _round_clip(B_tot)

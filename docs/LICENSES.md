@@ -30,10 +30,12 @@ Cập nhật: 2026-11-01.
 
 ## Khai báo minh bạch về phơi nhiễm mã (clean-room)
 
-Trước khi thiết lập quy trình clean-room, **điều phối đã xem** (chỉ cấu trúc, không nghiên cứu logic thuật toán để tái使用):
+Trước khi thiết lập quy trình clean-room, **điều phối đã xem** (chỉ cấu trúc, không nghiên cứu logic thuật toán để tái sử dụng):
 - Cây thư mục 4 repo upstream + README + file requirements của chúng;
 - `AGENTS.md` của AltLoRA (mô tả cấu trúc file, bẫy phần cứng Kaggle — không chứa thuật toán);
 - Lối vào các hàm chính (tên file: `optimizer_new.py`, `gora.py`, `train.py`) — chưa đọc thân hàm.
+
+Bổ sung — **verify-agent (2026-11-01, hộp đen)** đã đọc hẹp để BIẾT CÁCH GỌI (không phải để hiểu thuật toán): grep dòng `def`/`class`; 4 range nhỏ trong `gora.py` (dòng 24–58, 298–315, 323–330, 370–383 — signature + call-site: `features=int(in+out)`, `grad_stored`=attribute, return 4-tuple); import-đầu-file 3 file trong `common/`; flags CLI của `example_llama3.1_metamathqa.sh` + defaults `gora_t5_helpers.py`. Ghi rõ để người đánh giá tự cân nhắc mức "clean".
 
 Quy tắc áp dụng từ đó: `spec-agent` và `impl-agent` **không được đọc** bất kỳ file `.py/.sh/.ipynb` nào của 4 repo upstream; chỉ `verify-agent` chạy chúng như hộp đen trong môi trường tách biệt. Nếu quy trình này vẫn bị coi là phơi nhiễm không đủ sạch, phương án B (xin phép tác giả) là bước tiếp theo — đặt câu hỏi cho người dùng trước khi mở public.
 

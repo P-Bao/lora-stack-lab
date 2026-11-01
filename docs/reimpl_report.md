@@ -23,9 +23,19 @@ Sau merge main: **29/29 unit test pass** (torch 2.13 CPU + peft 0.20.0 local; ph
 4. Merge 3 nhánh vào main; chạy lại toàn bộ test.
 5. verify-agent hộp đen + reviewer (kết quả ở dưới).
 
-## Kết quả verify hộp đen (lớp 3)
+## Kết quả verify hộp đen (lớp 3) — verify-agent 2026-11-01
 
-*(điền sau khi verify-agent báo — V1/V2/V3, kèm danh sách DEFERRED sang Kaggle session đầu)*
+| Kiểm định | Kết quả | Số liệu |
+|---|---|---|
+| V1: GraLoRA k=1 suy biến về LoRA (peft upstream) | **MATCH** | ΔW + forward diff = 0.00e+00; scaling s khớp; A-init cùng phân phối kaiming |
+| V2-B: importance Eq.(5) I=avg abs(W⊙G) so mã tác giả | **MATCH** | rel = 0.0 (cùng union_mean, features=int(in+out)) |
+| V2-C: dạng ngân sách (m+n)·r (D-002.5) | **KHỚP** | budget 1408 = Σ(m+n)·r_ref; trainable khớp Σ(m+n)·r_i |
+| V2-C/D: luật làm tròn rank | **MISMATCH** | tác giả dùng **floor** (12.74→12), spec dùng round-half-up (→13); lệch chỉ ở biên |
+| V2-E: init B (hướng + scale) | **MATCH hướng** | cosine 1.000000; nhưng tác giả dùng **γ=1.0**, spec Table 9 γ=0.05@r=8 (B lớn hơn 20×) |
+| V3-B: AltLoRA numeric 1:1 | **DEFERRED** | mã tác giả standalone chạy nhánh fallback (không phải Algo 1); so trên Kaggle với integration thật |
+| V3-C: randomized SVD (BA-LoRA) | **MATCH** | rel vs exact SVD = 1.52e-07; k giá trị σ khớp từng giá trị |
+
+File kiểm định: `tests/blackbox/` (test_gralora_k1.py, run_gora_blackbox.py, DEFERRED_KAGGLE.md — 4 mục deferred với thứ tự + env).
 
 ## Kết quả review (cavecrew-reviewer, diff 7cc106d..HEAD, 2019 dòng)
 

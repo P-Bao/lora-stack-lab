@@ -191,7 +191,9 @@ if gora is not None and author_lora is not None:
             scalars = []
 
             def _collect(x):
-                if torch.is_tensor(x) and x.numel() == 1:
+                if isinstance(x, (int, float)) and not isinstance(x, bool):
+                    scalars.append(float(x))
+                elif torch.is_tensor(x) and x.numel() == 1:
                     scalars.append(float(x))
                 elif isinstance(x, tuple):
                     for y in x:
@@ -229,9 +231,12 @@ if gora is not None and author_lora is not None:
                 # orientation: try (out,r)@(r,in) vs (r,out)@(in,r) — pick the (M,N)-shaped one
                 cand = []
                 for fa, fb in ((wa, wb), (wb, wa)):
-                    d = fb @ fa if fa.dim() == 2 and fb.dim() == 2 else None
-                    if d is not None and tuple(d.shape) == (M, N):
-                        cand.append(d)
+                    try:
+                        d = fb @ fa
+                        if d is not None and tuple(d.shape) == (M, N):
+                            cand.append(d)
+                    except RuntimeError:
+                        pass
                 scaler = float(getattr(layer, "lora_scaler", 1.0))
                 dW_auth = cand[0] * scaler if cand else None
                 if dW_auth is not None:
@@ -337,7 +342,7 @@ if gora is not None and author_lora is not None:
             from lorastack.adapters.gora_alloc import _allocate_ranks_from_importance
             import math
 
-            def author_ranks_scaled(scale2):
+            def author_ranks_scaled(scale2, stretagy="moderate"):
                 torch.manual_seed(SEED)
                 mdl = torch.nn.Sequential(
                     gora.LinearWithGoRA(gora.LoRAConfig(lora_rank=R_REF, lora_scaler=1.0, in_features=N, out_features=M)),
@@ -358,7 +363,7 @@ if gora is not None and author_lora is not None:
                     w_.grad_stored = gs
                 args2 = SimpleNamespace(lora_rank=R_REF, gora_max_rank=R_MAX, gora_min_rank=R_MIN,
                                         gora_importance_type="union_mean", gora_scale_importance=False,
-                                        gora_allocate_stretagy="moderate", gora_features_func=None)
+                                        gora_allocate_stretagy=stretagy, gora_features_func=None)
                 res2 = None
                 for _ in range(15):
                     try:
@@ -387,8 +392,7 @@ if gora is not None and author_lora is not None:
                 return ranks
 
             shapes_ = {"0": (M, N), "2": (16, M)}
-            for target in (12.5, 14.5):
-                # closed-form scale so OUR raw value for layer '2' hits `target`
+            for target in (12.5, 14.5):                # closed-form scale so OUR raw value for layer '2' hits `target`
                 r0, r1 = author_ranks_scaled(1.0)  # warm run for baseline importances
                 # recompute imps from the baseline stored grads
                 w0 = r1[0].weight if hasattr(r1[0], "weight") else r1[0].base_layer.weight
@@ -404,6 +408,14 @@ if gora is not None and author_lora is not None:
                 pred_floor = predict(i0_, s * i1_, shapes_, "floor")
                 log(f"P raw={target}", "OK",
                     f"scale={s:.4f} author={ranks_a} our_half_up={pred_half} our_floor={pred_floor}")
+            # does the strategy flag matter at all?
+            strat = {}
+            for st in ("moderate", "conserved", "radical"):
+                try:
+                    strat[st] = author_ranks_scaled(1.0, st)[0]
+                except Exception as e2:
+                    strat[st] = f"{type(e2).__name__}: {str(e2)[:60]}"
+            log("P' strategy flag", "OK", repr(strat))
         except Exception as e:
             log("P rounding discriminators", "DEFERRED", f"{type(e).__name__}: {str(e)[:200]}")
 

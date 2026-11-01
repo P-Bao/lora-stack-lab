@@ -84,3 +84,9 @@ Bảng trung tâm — spec-agent điền tiếp từ spec; không xóa dòng có
 9. **Bp bộ nhớ (spec/balora.md §6):** consistency reg của Bp cần copy frozen W₀ (+1 GB/0.5B, +3 GB/1.5B) → bắt buộc gradient_checkpointing khi Bp trên 1.5B; Br miễn phí qua `disable_adapter()` (GoRA-init không đụng W₀).
 10. **PiSSA resume (spec/balora.md §7):** resume qua `PeftModel.from_pretrained` trên base nguyên bản (PEFT tự chạy lại SVD); chuyển đổi PiSSA→LoRA (ΔW hạng 2r) chỉ dùng cho sản phẩm cuối.
 11. **D-X1b — Bp + G (phát hiện từ impl-balora):** `GraloraConfig` KHÔNG có `init_lora_weights` → PEFT không cấp PiSSA cho GraLoRA. `pipeline.build` giờ raise NotImplementedError thay vì mất init âm thầm. Stage 5 (TETRAD-P = G+O+A+Bp) phải chọn: (a) viết `adapters/pissa_init.py` cho GraLoRA (SVD từng W, chia lát k×k — tái dùng logic lát của Oi) hoặc (b) TETRAD-P chạy init mặc định + ghi độ lệch. Quyết định trước khi mở Giai đoạn 5.
+
+## D-003 — Quyết định từ verify hộp đen (user, 2026-11-01)
+
+1. **Luật làm tròn rank (GoRA):** đổi round-half-up → **floor** (khớp hành vi quan sát được của mã tác giả qua hộp đen V2-C/D; lệch chỉ ở biên ≤1 rank/layer). 
+2. **GoRA γ:** giữ **γ=0.05** mặc định (paper Table 9 @ r=8) — độ lệch có chủ ý so với mã tác giả thực chạy (γ=1.0 cho MetaMathQA, xác nhận qua hộp đen V2-E; init B nhỏ hơn 20×). Ghi rõ khi báo cáo combo Oi. Override bằng `cfg.gora_gamma`.
+3. **AltLoRA numeric 1:1:** DEFERRED sang Kaggle session đầu (mã tác giả standalone chạy nhánh fallback, không tái hiện được Algo 1 local — xem tests/blackbox/DEFERRED_KAGGLE.md).
