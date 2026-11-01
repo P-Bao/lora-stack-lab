@@ -97,6 +97,7 @@ def build(cfg: ExpConfig):
 
     # 4. optimizer (A | AdamW)
     if "A" in components:
+        # A hook fills ctx.ab_pairs itself (it owns pair/slice semantics)
         optimizer = get_hooks("A").make_optimizer(cfg, model, ctx)
     else:
         # B params get lr * lr_ratio_ba (GoRA App. B.3 uses 16 when training with Oi)
@@ -110,22 +111,7 @@ def build(cfg: ExpConfig):
             groups.append({"params": b_params, "lr": cfg.lr * cfg.lr_ratio_ba})
         optimizer = torch.optim.AdamW(groups, lr=cfg.lr, weight_decay=cfg.weight_decay)
 
-    # collect (A,B) pairs for AltLoRA block-wise projection if it was not done inside make_optimizer
-    if "A" in components and not ctx.ab_pairs:
-        _collect_ab_pairs(model, ctx)
     return model, tok, ctx, optimizer
-
-
-def _collect_ab_pairs(model, ctx) -> None:
-    """Pairs (lora_A.weight, lora_B.weight) per adapted module; for GraLoRA one entry per sub-block."""
-    pairs = []
-    for name, mod in model.named_modules():
-        params = dict(mod.named_parameters(recurse=False))
-        a_keys = sorted(k for k in params if ".lora_A." in k or k.startswith("gralora_A"))
-        b_keys = sorted(k for k in params if ".lora_B." in k or k.startswith("gralora_B"))
-        if a_keys and b_keys:
-            pairs.extend((params[a], params[b], name) for a, b in zip(a_keys, b_keys))
-    ctx.ab_pairs = pairs
 
 
 def base_forward(model, batch):
