@@ -10,8 +10,8 @@ cells = [
     {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [], "source": [
         "import os, subprocess, sys\n",
         "\n",
-        "BRANCH  = \"stage0/harness\"        # <- change per stage\n",
-        "REPO    = \"USER/lora-stack-lab\"   # <- fill with the public repo (USER)\n",
+        "BRANCH  = \"main\"                # <- change per stage\n",
+        "REPO    = \"P-Bao/lora-stack-lab\"  # public repo\n",
         "COMMIT  = None                    # <- optional: pin exact commit for reproduction\n",
         "RUN_IDS = []                      # <- empty = run whole stage from configs/experiments/\n",
         "\n",
