@@ -1,0 +1,8 @@
+# Pinned env for lora-stack-lab — Kaggle T4 x2, Python 3.10+ (expect 3.11).
+# DO NOT add torch here: Kaggle preinstalls torch ~2.x built for the image's exact
+# CUDA/NCCL ABI; reinstalling torch can break that ABI. Only pin the HF stack.
+# Fallback if peft 0.21.2 misbehaves on Kaggle: change to peft==0.19.1 (and PEFT_PIN in tests/test_env.py).
+peft==0.21.2
+transformers==4.57.6
+accelerate==1.15.0
+datasets==4.8.5
