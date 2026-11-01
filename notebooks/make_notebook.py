@@ -16,6 +16,7 @@ cells = [
         "RUN_IDS = []                      # <- empty = run whole stage from configs/experiments/\n",
         "\n",
         "sh = lambda c: subprocess.run(c, shell=True, check=True)\n",
+        "sh(\"rm -rf /tmp/repo\")  # idempotent: always clone fresh (stale /tmp/repo = stale code)\n",
         "sh(f\"git clone --depth 1 --branch {BRANCH} https://github.com/{REPO}.git /tmp/repo\")\n",
         "if COMMIT:\n",
         "    sh(f\"cd /tmp/repo && git fetch --depth 1 origin {COMMIT} && git checkout {COMMIT}\")\n",
