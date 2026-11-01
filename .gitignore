@@ -1,0 +1,27 @@
+# upstream code (no license) — black-box verification only, never committed
+third_party/
+
+# results & runtime
+results/
+ckpt/
+models/
+data/raw/
+hf_cache/
+*.zip
+*.tar
+
+# secrets & local env
+.env
+*.token
+
+# python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# notebooks / editors
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
