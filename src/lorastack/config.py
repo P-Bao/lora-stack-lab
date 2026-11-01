@@ -80,8 +80,21 @@ class ExpConfig:
     def from_dict(cls, raw: dict) -> "ExpConfig":
         raw = dict(raw or {})
         data_raw = raw.pop("data", None)
-        known = {f.name for f in fields(cls)}
-        cfg = cls(**{k: v for k, v in raw.items() if k in known})
+        flist = fields(cls)
+        known = {f.name for f in flist}
+        # YAML 1.1 parses "2e-4" as str (float needs a dot) — coerce str -> int/float
+        # by the dataclass annotation so user YAMLs never feed strings into math.
+        coerced = {}
+        types = {f.name: f.type for f in flist}
+        for k, v in raw.items():
+            if k in known and isinstance(v, str) and types[k] in ("float", "int",
+                                                                  "Optional[float]", "Optional[int]"):
+                try:
+                    v = float(v) if "float" in types[k] else int(v)
+                except ValueError:
+                    pass  # keep the string; a clearer error will surface at use site
+            coerced[k] = v
+        cfg = cls(**{k: v for k, v in coerced.items() if k in known})
         if data_raw:
             cfg.data = DataConfig(**{k: v for k, v in data_raw.items() if k in {f.name for f in fields(DataConfig)}})
         return cfg
@@ -103,9 +116,3 @@ class ExpConfig:
             with open(path, "w", encoding="utf-8") as f:
                 yaml.safe_dump(d, f, sort_keys=False)
         return d
-        d: dict[str, Any] = {}
-        for f in fields(self):
-            v = getattr(self, f.name)
-            d[f.name] = v if f.name != "data" else {ff.name: getattr(v, ff.name) for ff in fields(DataConfig)}
-        with open(path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(d, f, sort_keys=False)
