@@ -34,15 +34,26 @@ class ExpConfig:
     # GoRA
     gora_n_batches: int = 64          # N for gradient accumulation
     gora_r_min: Optional[int] = None  # default rank//2
+    gora_r_max: Optional[int] = None  # default None = spec/gora.md table
+    gora_gamma: Optional[float] = None  # None = spec/gora.md lookup by r_ref
+    gora_use_rslora: bool = False     # USER 2026-11-01: alpha/r everywhere; flag for ablation only
+    lr_ratio_ba: float = 1.0          # lr multiplier for B params (GoRA App. B.3 uses 16)
     # AltLoRA
     altlora_momentum: float = 0.9
-    # BA-LoRA regularizers
-    balora_lambda1: float = 0.025     # consistency (distillation)
-    balora_lambda2: float = 0.005     # diversity (top-k entropy)
-    balora_lambda3: float = 0.005     # SVD-based
+    altlora_order: str = "B_first"    # paper Table 5: B-first 76.31 vs A-first 74.49 (B=0 => A-step no-op)
+    altlora_variant: str = "altlora"  # | "altlora_plus" (Algo 2, optional)
+    altlora_ridge: float = 1e-6
+    # BA-LoRA regularizers — defaults from PAPER (user 2026-11-01); NLG set
+    balora_variant: str = "nlg"       # nlg (KL/entropy/randSVD k=10) | nlu (MSE/cov/exactSVD k=5)
+    balora_lambda1: float = 1e-5      # consistency (distillation)
+    balora_lambda2: float = 1e-1      # diversity (entropy)
+    balora_lambda3: float = 1e-1      # SVD-based
     balora_distill_temp: float = 2.0
-    balora_top_k_entropy: int = 20
-    balora_svd_k: int = 10
+    balora_top_k_entropy: int = 0     # 0 = full vocab (paper); >0 = top-k proxy
+    balora_svd_k: int = 10            # nlu variant uses 5
+    balora_schedule: str = "spec42"   # spec/balora.md section 4.2 (paper has no schedule)
+    balora_warmup_ratio: float = 0.2
+    balora_ramp_up_ratio: float = 0.05
 
     # training
     lr: float = 2e-4

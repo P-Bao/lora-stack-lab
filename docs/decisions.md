@@ -67,6 +67,19 @@ Bảng trung tâm — spec-agent điền tiếp từ spec; không xóa dòng có
 | ID | Thành phần | Mô tả độ lệch | Lý do | Trạng thái |
 |---|---|---|---|---|
 | X2 | G+O | r toàn cục thay vì rank theo lớp; O chỉ phân phối ngân sách theo nhóm mức | `GraloraConfig` không có `rank_pattern` (bằng chứng: D-X2) | Đã quyết định |
-| X1 | Oi/Bp | *(chờ spec-agent)* | PiSSA sửa trọng số gốc — xung đột với GoRA-init | Chờ spec |
-| X3 | Oi+G | *(chờ spec-agent)* | Init gradient theo từng khối GraLoRA | Chờ spec |
-| X4 | A+G | *(chờ spec-agent)* | Optimizer chiếu theo từng khối GraLoRA | Chờ spec |
+| X1 | Oi/Bp | Oi và PiSSA loại trừ nhau (`pipeline.build` raise ValueError); PiSSA sửa W_res (xác minh `pissa_init`), GoRA-init không đụng W₀ | Hai cơ chế init không thể cùng bật | Đã quyết định |
+| X3 | Oi+G | Init gradient gán THEO LÁT của param 3D `gralora_A [k, in//k, r]` / `gralora_B [k, r, out//k]` (không phải param riêng từng khối) | Cấu trúc thực của PEFT 0.21.2 (peft_inventory.md) | Đã quyết định |
+| X4 | A+G | AltLoRA chiếu theo lát khối; PEFT `create_loraplus_optimizer` chỉ dùng làm baseline LoRA+ (group toàn tensor, bắt cả gralora_B) | peft_inventory.md | Đã quyết định |
+
+## D-002 — Quyết định sau khi rà 3 spec (điều phối + user, 2026-11-01)
+
+1. **rsLoRA (spec/gora.md 9.9 — user quyết định):** dùng **α/r cho MỌI config**, không bật `use_rslora`. `gora_use_rslora` (mặc định False) chỉ là flag ablation. Đây là độ lệch so với GoRA paper (dùng α/√r như một phần phương pháp) — ghi rõ khi báo cáo combo có Oi/O.
+2. **BA-LoRA defaults (user quyết định):** theo PAPER — NLG: λ=(1e-5, 1e-1, 1e-1), k=10, SVDR mẫu số = Σσ̃ (bỏ frob_norm), entropy full-vocab (`balora_top_k_entropy=0`); NLU variant (k=5, MSE/cov/exact-SVD) chọn bằng `balora_variant`. Giá trị 0.025/0.005/0.005 trong README upstream KHÔNG dùng (repo chưa license + khác paper). Schedule không có trong paper → dùng đề xuất spec/balora.md §4.2 (`balora_schedule="spec42"`, warmup 0.2, ramp 0.05) — độ lệch có chủ ý.
+3. **AltLoRA thứ tự pha (spec/altlora.md §8.1):** **B-first** (paper Table 5: 76.31 vs 74.49 GSM8K; A-first tại t=0 là no-op vì B=0). Field `altlora_order="B_first"`.
+4. **LR quét cho single-a (spec/altlora.md §8.2):** AltLoRA bậc nhất cần lr cao hơn AdamW → stage2/single-a quét {2e-4, 1e-3, 5e-3, 1e-2} (quy tắc 0.3: mỗi phương pháp quét LR riêng).
+5. **GoRA Eq.(7)–(8) (9.1):** hệ số dùng (m+n) theo bằng chứng nội tại của paper (mục 9.1 spec), không dùng √(m+n) của bản render.
+6. **GoRA clamp rescale (9.7):** 1 vòng rescale ngân sách deterministic khi layer chạm r_min/r_max.
+7. **GoRA hướng kaiming (9.8):** dùng PEFT-native init cho A (r×n), flag đổi hướng nếu cần đối chiếu.
+8. **lr_ratio_ba (9.10):** field `lr_ratio_ba` (mặc định 1.0); GoRA App. B.3 dùng 16 — bật khi chạy combo có Oi theo paper, ghi rõ.
+9. **Bp bộ nhớ (spec/balora.md §6):** consistency reg của Bp cần copy frozen W₀ (+1 GB/0.5B, +3 GB/1.5B) → bắt buộc gradient_checkpointing khi Bp trên 1.5B; Br miễn phí qua `disable_adapter()` (GoRA-init không đụng W₀).
+10. **PiSSA resume (spec/balora.md §7):** resume qua `PeftModel.from_pretrained` trên base nguyên bản (PEFT tự chạy lại SVD); chuyển đổi PiSSA→LoRA (ΔW hạng 2r) chỉ dùng cho sản phẩm cuối.
