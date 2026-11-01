@@ -66,4 +66,7 @@ Chạy lại toàn bộ: **32/32 pass** (29 cũ + 3 contract test mới).
 - `rank_pattern` key full-path của Qwen trên PEFT 0.21.2: chỉ test được toy trên 0.20.0 local — **phải smoke Kaggle (Gate 0)**.
 - Tác động fp16 T4 thật: mọi đảo chiều/chiếu đã fp32-island nhưng chưa chạy GPU thật.
 - svdvals backward NaN khi σ trùng tuyệt đối (measure-zero) — đã comment trong code.
-- Black-box đầy đủ (V2/V3 nếu DEFERRED) dời sang Kaggle session đầu.
+- Black-box đầy đủ (V2 GoRA end-to-end, V3 AltLoRA/BA-LoRA 1:1) dời sang Kaggle session đầu — `tests/blackbox/DEFERRED_KAGGLE.md`.
+- **Gate 0 cần chạy**: `test_env.py` (ghim peft 0.21.2/transformers 4.57.6), E0-SMOKE-L (50 bước, không NaN), đo thông lượng → `docs/budget.md`.
+
+## Trạng thái: DỪNG theo kế hoạch (bước 1.11) — chờ user duyệt trước Giai đoạn 1 (Kaggle)
