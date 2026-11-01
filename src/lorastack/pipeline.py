@@ -28,6 +28,21 @@ from .utils.seed import set_seed
 B_CODES = {"B", "Bp", "Br"}
 
 
+def _adamw_groups(model, cfg) -> list[dict]:
+    """Every trainable param lands in exactly one group; B params get lr * lr_ratio_ba
+    (GoRA App. B.3 uses 16 when training with Oi). B group is ALWAYS added."""
+    base_params, b_params = [], []
+    for name, p in model.named_parameters():
+        if not p.requires_grad:
+            continue
+        parts = set(name.split("."))
+        (b_params if ({"lora_B", "gralora_B"} & parts) else base_params).append(p)
+    groups = [{"params": base_params, "lr": cfg.lr}]
+    if b_params:
+        groups.append({"params": b_params, "lr": cfg.lr * cfg.lr_ratio_ba})
+    return groups
+
+
 def _git_commit() -> str:
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=10).strip()
@@ -95,21 +110,22 @@ def build(cfg: ExpConfig):
         get_hooks("Oi").init_adapter(cfg, model, ctx)
         ctx.init_mode = "gora"
 
+    # Pin PISSA-INIT values NOW (before load_ckpt can overwrite them with trained
+    # weights on resume; PiSSA init is deterministic SVD so a fresh session reproduces
+    # the same A0/B0). balora_reg's lazy first-call snapshot would otherwise capture
+    # TRAINED params after resume -> consistency reg silently dead (reviewer 🔴3).
+    if ctx.init_mode == "pissa":
+        from lorastack.losses.balora_reg import _snapshot_adapter_params
+        _snapshot_adapter_params(model, ctx)
+
     # 4. optimizer (A | AdamW)
     if "A" in components:
         # A hook fills ctx.ab_pairs itself (it owns pair/slice semantics)
         optimizer = get_hooks("A").make_optimizer(cfg, model, ctx)
     else:
-        # B params get lr * lr_ratio_ba (GoRA App. B.3 uses 16 when training with Oi)
-        base_params, b_params = [], []
-        for name, p in model.named_parameters():
-            if not p.requires_grad:
-                continue
-            (b_params if ".lora_B." in name or name.startswith("gralora_B") else base_params).append(p)
-        groups = [{"params": base_params, "lr": cfg.lr}]
-        if b_params and cfg.lr_ratio_ba != 1.0:
-            groups.append({"params": b_params, "lr": cfg.lr * cfg.lr_ratio_ba})
-        optimizer = torch.optim.AdamW(groups, lr=cfg.lr, weight_decay=cfg.weight_decay)
+        optimizer = torch.optim.AdamW(
+            _adamw_groups(model, cfg), lr=cfg.lr, weight_decay=cfg.weight_decay
+        )
 
     return model, tok, ctx, optimizer
 

@@ -70,7 +70,7 @@ def _schedule_factors(cfg, ctx) -> tuple[float, float, float]:
     u = min(max(ctx.step / ctx.total_steps, 0.0), 1.0)
     w = float(cfg.balora_warmup_ratio)
     q = float(cfg.balora_ramp_up_ratio)
-    if u <= w:
+    if u <= w and w > 0:
         f1 = f23 = u / w
     else:
         f1 = 0.5 * (1.0 + math.cos(math.pi * (u - w) / (1.0 - w)))
@@ -262,6 +262,9 @@ def loss_terms(cfg, model, ctx, batch, base_forward):
         # is currently off, so the reference is pinned before any training step.
         if ctx.init_mode == "pissa":
             _snapshot_adapter_params(model, ctx)
+
+        if lam1 <= 0 and lam2 <= 0 and lam3 <= 0:
+            return {}  # skip ref + student forwards entirely (no +50% step cost)
 
         # reference forward FIRST: for pissa it swaps adapter params, which is only
         # safe while no autograd graph is live (pipeline backwards after this returns)

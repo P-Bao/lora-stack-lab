@@ -68,32 +68,41 @@ def _accumulate_grads(cfg, model, probe_loader) -> dict[str, torch.Tensor]:
         raise ValueError("GoRA probe: no target layers found (check cfg.target_modules)")
     G = {name: torch.zeros_like(p, dtype=torch.float32, device="cpu") for name, p in targets.items()}
     handles, saved = [], []
-    for name, p in targets.items():
-        saved.append((p, p.requires_grad))
-        p.requires_grad_(True)
-
-        def _hook(grad, _name=name):
-            G[_name] += grad.detach().float().cpu()  # offload per batch (Algorithm 1 l.10)
-
-        handles.append(p.register_hook(_hook))
+    # freeze non-targets during the probe: backward otherwise builds grads for the whole
+    # model (~+1 GB/0.5B transient at build time — reviewer 🟡)
+    all_saved = [(p, p.requires_grad) for p in model.parameters()]
+    target_ids = {id(p) for _, p in targets.items()}
     device = next(model.parameters()).device
     was_training = model.training
-    model.train()  # spec 9.4: train mode; seed fixed by caller (allocate_ranks / pipeline)
     n = 0
-    for batch in probe_loader:
-        batch = {k: v.to(device) for k, v in batch.items()}
-        out = model(**batch)
-        out.loss.backward()  # fp32 loss, no autocast (spec 7.1)
-        model.zero_grad(set_to_none=False)  # Algorithm 1: accumulate, no optimizer step
-        n += 1
-        if n >= cfg.gora_n_batches:
-            break
-    for h in handles:
-        h.remove()
-    for p, rg in saved:
-        p.requires_grad_(rg)
-    model.zero_grad(set_to_none=True)  # spec 7.5: no stray grads for the training optimizer
-    model.train(was_training)
+    try:
+        for name, p in targets.items():
+            saved.append((p, p.requires_grad))
+            p.requires_grad_(True)
+
+            def _hook(grad, _name=name):
+                G[_name] += grad.detach().float().cpu()  # offload per batch (Algorithm 1 l.10)
+
+            handles.append(p.register_hook(_hook))
+        for p, rg in all_saved:
+            if id(p) not in target_ids:
+                p.requires_grad_(False)
+        model.train()  # spec 9.4: train mode; seed fixed by caller (allocate_ranks / pipeline)
+        for batch in probe_loader:
+            batch = {k: v.to(device) for k, v in batch.items()}
+            out = model(**batch)
+            out.loss.backward()  # fp32 loss, no autocast (spec 7.1)
+            model.zero_grad(set_to_none=False)  # Algorithm 1: accumulate, no optimizer step
+            n += 1
+            if n >= cfg.gora_n_batches:
+                break
+    finally:
+        for h in handles:
+            h.remove()
+        for p, rg in all_saved:
+            p.requires_grad_(rg)
+        model.zero_grad(set_to_none=True)  # spec 7.5: no stray grads for the training optimizer
+        model.train(was_training)
     _PASS_COUNT += 1
     if n == 0:
         raise ValueError("GoRA probe: loader yielded no batches")
