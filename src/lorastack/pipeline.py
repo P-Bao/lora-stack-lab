@@ -99,10 +99,16 @@ def build(cfg: ExpConfig):
     if "A" in components:
         optimizer = get_hooks("A").make_optimizer(cfg, model, ctx)
     else:
-        optimizer = torch.optim.AdamW(
-            (p for p in model.parameters() if p.requires_grad), lr=cfg.lr,
-            weight_decay=cfg.weight_decay,
-        )
+        # B params get lr * lr_ratio_ba (GoRA App. B.3 uses 16 when training with Oi)
+        base_params, b_params = [], []
+        for name, p in model.named_parameters():
+            if not p.requires_grad:
+                continue
+            (b_params if ".lora_B." in name or name.startswith("gralora_B") else base_params).append(p)
+        groups = [{"params": base_params, "lr": cfg.lr}]
+        if b_params and cfg.lr_ratio_ba != 1.0:
+            groups.append({"params": b_params, "lr": cfg.lr * cfg.lr_ratio_ba})
+        optimizer = torch.optim.AdamW(groups, lr=cfg.lr, weight_decay=cfg.weight_decay)
 
     # collect (A,B) pairs for AltLoRA block-wise projection if it was not done inside make_optimizer
     if "A" in components and not ctx.ab_pairs:
