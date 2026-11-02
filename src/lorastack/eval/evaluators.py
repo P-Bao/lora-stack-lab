@@ -15,17 +15,27 @@ def _last_number(text: str) -> str | None:
 
 
 @torch.no_grad()
-def eval_gsm8k(model, tokenizer, cfg, device) -> dict:
+def eval_gsm8k(model, tokenizer, cfg, device, collect: list | None = None) -> dict:
     rows = load_eval_prompts("gsm8k", cfg.data.eval_size)
+    prompts = [f"Question: {r['q']}\nAnswer:" for r in rows]
+    tokenizer.padding_side = "left"  # decoder-only batched generate requires left padding
+    bs = max(1, int(getattr(cfg.data, "eval_batch_size", 16)))
+    texts: list[str] = []
+    for i in range(0, len(prompts), bs):
+        enc = tokenizer(prompts[i:i + bs], return_tensors="pt", padding=True,
+                        add_special_tokens=True).to(device)
+        out = model.generate(**enc, max_new_tokens=512, do_sample=False,
+                             pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id)
+        texts += tokenizer.batch_decode(out[:, enc["input_ids"].shape[1]:], skip_special_tokens=True)
     correct = 0
-    for r in rows:
-        prompt = f"Question: {r['q']}\nAnswer:"
-        ids = tokenizer(prompt, return_tensors="pt", add_special_tokens=True).to(device)
-        out = model.generate(**ids, max_new_tokens=512, do_sample=False, pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id)
-        text = tokenizer.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True)
+    for r, text in zip(rows, texts):
         pred = _last_number(text)
         gold = _last_number(r["gold"])
-        correct += int(pred is not None and gold is not None and abs(float(pred) - float(gold)) < 1e-4)
+        ok = pred is not None and gold is not None and abs(float(pred) - float(gold)) < 1e-4
+        correct += int(ok)
+        if collect is not None:
+            collect.append({"q": r["q"], "gold": r["gold"], "pred": pred,
+                            "correct": ok, "text": text})
     return {"gsm8k_acc": correct / len(rows), "n_eval": len(rows)}
 
 
@@ -52,9 +62,13 @@ def eval_glue(model, tokenizer, cfg, device) -> dict:
     return {f"{cfg.data.eval_name}_acc": correct / len(rows), "n_eval": len(rows)}
 
 
-def evaluate(model, tokenizer, cfg, device) -> dict:
+def evaluate(model, tokenizer, cfg, device, collect: list | None = None) -> dict:
+    model.eval()
+    # generate needs the KV cache; with gradient checkpointing on, HF nulls
+    # past_key_values every step (see stage1 log) -> ~10x slower generation
+    model.gradient_checkpointing_disable()
     if cfg.data.eval_name == "gsm8k":
-        return eval_gsm8k(model, tokenizer, cfg, device)
+        return eval_gsm8k(model, tokenizer, cfg, device, collect=collect)
     if cfg.data.eval_name.startswith("glue:"):
         return eval_glue(model, tokenizer, cfg, device)
     raise ValueError(f"no evaluator for {cfg.data.eval_name}")

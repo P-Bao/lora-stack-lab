@@ -33,7 +33,7 @@ def done_ids(search_dirs: list[str]) -> set[str]:
             continue
         for base, _, files in os.walk(root):
             for f in files:
-                if f.endswith(".json") and not f.endswith((".FAILED.json", ".config.yaml", ".log.jsonl")):
+                if f.endswith(".json") and not f.endswith((".FAILED.json", ".config.yaml", ".log.jsonl", ".reeval.json")):
                     done.add(f[: -len(".json")])
     return done
 

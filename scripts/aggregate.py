@@ -27,19 +27,27 @@ def combo_key(rec: dict) -> str:
     cfg = rec.get("config")
     return "+".join(cfg["components"]) if isinstance(cfg, dict) and "components" in cfg else rec["id"]
 
-
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # Δ/σ crash cp1252 consoles
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="results")
     args = ap.parse_args()
 
     groups: dict[str, list[float]] = defaultdict(list)
+    # prefer <ID>.reeval.json over the plain <ID>.json when both exist (reeval rescues bad scores)
+    recs: dict[str, dict] = {}
     for f in sorted(Path(args.results).rglob("*.json")):
         if f.name.endswith(".FAILED.json") or f.name.endswith(".config.yaml") or f.name.endswith(".log.jsonl"):
             continue
         rec = read_json(str(f))
         if not rec or rec.get("status") != "done":
             continue
+        rid = rec.get("id") or f.stem
+        prev = recs.get(rid)
+        if prev is None or (rec.get("reeval") and not prev.get("reeval")):
+            recs[rid] = rec
+    for rec in recs.values():
         s = score(rec)
         if s is not None:
             groups[combo_key(rec)].append(s)

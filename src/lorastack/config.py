@@ -16,6 +16,7 @@ class DataConfig:
     seq_len: int = 512
     eval_name: str = "gsm8k"          # gsm8k | humaneval | glue:<task>
     eval_size: int = 200
+    eval_batch_size: int = 16
 
 
 @dataclass
