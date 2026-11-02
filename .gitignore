@@ -1,0 +1,2 @@
+# adapters are 336 MB (5 x ~70 MB safetensors) — kept local, uploaded to Kaggle Dataset for reeval
+stage1/ckpt/
