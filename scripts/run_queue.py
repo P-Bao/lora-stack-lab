@@ -79,7 +79,7 @@ def main() -> int:
         gpu = next(gpu_cycle)
         env = {**os.environ, "CUDA_VISIBLE_DEVICES": gpu}
         p = subprocess.Popen(
-            [sys.executable, str(REPO / "scripts" / "run_exp.py"), "--config", str(cfg_path),
+            [sys.executable, "-u", str(REPO / "scripts" / "run_exp.py"), "--config", str(cfg_path),
              "--out", args.out, "--ckpt", args.ckpt],
             env=env,
         )

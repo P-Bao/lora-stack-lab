@@ -51,6 +51,7 @@ KHÔNG ghim torch: Kaggle preinstall ~2.x build đúng ABI NCCL/CUDA của image
 - Bẫy 3 (PyYAML): `2e-4` đọc thành str — `ExpConfig.from_dict` ép kiểu theo annotation (fix 829af68).
 - Bẫy 4: default_collate trả list cho batch → collate tường minh trong loaders.py (fix 7fa8872).
 - Cảnh báo xung đột gradio/diffusers vs huggingface-hub 0.36.2: chỉ ảnh hưởng widget UI, bỏ qua.
+- **Bẫy 5 (stage1 session chết 12h):** (a) `from_pretrained` không có `device_map` → model nằm trên CPU — phải `model.to("cuda")` tường minh; (b) `DataLoader(num_workers=2)` fork sau khi HF/tokenizer đã mở threads → **deadlock** tại `next(data_iter)` đầu tiên (không crash, không log, TimeGuard không bắn vì check nằm ngoài vòng micro-batch) → `num_workers=0` (fast tokenizer của Qwen tokenize 20k mẫu tính bằng giây); (c) TimeGuard check đưa VÀO trong vòng micro-batch; (d) train in stdout mỗi 10 bước + `python -u` trong run_queue để log Kaggle hiển thị tiến độ.
 
 ---
 

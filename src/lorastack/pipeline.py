@@ -70,6 +70,8 @@ def build(cfg: ExpConfig):
     )
     if cfg.gradient_checkpointing:
         model.gradient_checkpointing_enable()
+    if torch.cuda.is_available():
+        model.to("cuda")  # explicit: from_pretrained stays on CPU without device_map
 
     ctx = AdapterContext(exp_id=cfg.exp_id, components=components, rank=cfg.rank)
 
@@ -161,6 +163,10 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
                     "resumed_from": start_step or None}
         optimizer.zero_grad(set_to_none=True)
         for _ in range(cfg.grad_accum):
+            if time.time() > guard:  # guard INSIDE the micro-batch loop: a stall/slow step must not escape it
+                save_ckpt(cfg.ckpt_dir, cfg.exp_id, model, optimizer, global_step)
+                return {"status": "timeguard", "step": global_step, "train_loss_curve": curve,
+                        "resumed_from": start_step or None}
             try:
                 batch = next(data_iter)
             except StopIteration:
@@ -186,6 +192,9 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
         if global_step % 10 == 0:
             curve.append({"step": global_step, "loss": round(running / cfg.grad_accum, 4)})
             logger.log({"step": global_step, "loss": running / cfg.grad_accum})
+            dt = (time.time() - t0) / max(global_step - start_step, 1)
+            print(f"[train] {cfg.exp_id} step {global_step}/{total_steps} "
+                  f"loss={running / cfg.grad_accum:.3f} {dt:.1f}s/step", flush=True)
             running = 0.0
         if global_step % cfg.ckpt_every_steps == 0:
             save_ckpt(cfg.ckpt_dir, cfg.exp_id, model, optimizer, global_step)

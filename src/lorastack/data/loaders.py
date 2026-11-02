@@ -64,8 +64,10 @@ def _fixed_len_collate(feats: list[dict]) -> dict[str, torch.Tensor]:
 def make_train_loader(cfg, tokenizer) -> DataLoader:
     ds, p_col, a_col = _load_raw(cfg.data.name, cfg.data.subset_size)
     wrapped = CausalLMDataset(ds, p_col, a_col, tokenizer, cfg.data.seq_len)
+    # num_workers=0: forking after HF/tokenizer threads start deadlocks on Kaggle (stage1
+    # session hung 12h at first next(data_iter)); fast tokenizer on 20k rows costs seconds.
     return DataLoader(wrapped, batch_size=cfg.batch_size, shuffle=True, drop_last=True,
-                      num_workers=2, collate_fn=_fixed_len_collate)
+                      num_workers=0, collate_fn=_fixed_len_collate)
 
 
 def make_gora_probe_loader(cfg, tokenizer, n_batches: int):
