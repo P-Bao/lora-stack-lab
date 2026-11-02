@@ -1,0 +1,82 @@
+# Kết quả & suy luận theo giai đoạn
+
+> nhánh results — cập nhật sau mỗi stage, dùng cho báo cáo cuối
+> Ngày: 2026-11-02
+
+Dự án: đo xem chồng cải tiến LoRA (`GraLoRA + GoRA + AltLoRA + BA-LoRA`) có cộng hưởng không, đối chứng baseline `L` (PEFT LoRA gốc). Hạ tầng: Kaggle T4 x2, Qwen2.5-0.5B, MetaMathQA 20k train, GSM8K eval 200 mẫu.
+
+---
+
+## Stage 0 — Harness smoke
+
+**Kết quả:** pass trên Kaggle (python 3.13.15, torch 2.11.0+cu128, 2×T4 14.6 GiB).
+
+**Pin chốt (D-001):** `peft==0.21.2`, `transformers==4.57.6`, `accelerate==1.15.0`, `datasets==4.8.5`. torch KHÔNG ghim — dùng torch của image Kaggle.
+
+**Bẫy phát hiện trong giai đoạn này:**
+
+1. `torchao` 0.10.0 có sẵn trong image → `peft >= 0.19` raise dù không dùng torchao. Fix: xoá mọi `torchao*` khỏi `sys.path` trong bootstrap.
+2. PyYAML đọc `2e-4` thành **str** → coerce trong `ExpConfig.from_dict`.
+3. `default_collate` trả list → dùng collate tường minh, cố định độ dài.
+4. `torch_dtype` deprecated → dùng `dtype`.
+5. Session treo 12h, ba nguyên nhân chồng nhau:
+   - `from_pretrained` không tự lên GPU → phải `model.to("cuda")`.
+   - `DataLoader(num_workers=2)` fork sau khi HF/tokenizer mở thread → **deadlock** tại `next(data_iter)` đầu tiên, không log, TimeGuard không bắn → đặt `num_workers=0`.
+   - TimeGuard check đưa **vào trong** vòng micro-batch; in tiến độ stdout mỗi 10 bước + `python -u`.
+6. OOM 12.9 GB trên T4 14.6 (activations batch 8×512 + fp32 logits 2.32 GiB) → `gradient_checkpointing: true` (+35% step time) + `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`.
+7. Loss in `0.000` do edit gỡ nhầm `running += loss.item()`; loss thật ở đầu train ~1.8x.
+
+---
+
+## Stage 1 — LR sweep cho baseline L
+
+Cấu hình: r=32, seed 1, 5 LR `{5e-5, 1e-4, 2e-4, 5e-4, 1e-3}`, 625 bước, adapter snapshot bước 500.
+
+### Lịch sử session
+
+3 session đầu hỏng lần lượt: treo 12h → OOM → loss 0.000 (đúng các bẫy mục Stage 0). Session chạy thành công trên commit `dd8515d`, ~2.8h wall/run.
+
+### Sự cố & rescue
+
+- Run `lr5e-5` bị dừng tay **giữa eval** → mất json (còn `log.jsonl` + adapter).
+- Cả 4 run có json đều báo `gsm8k_acc=0.0` → nghi bug hệ thống.
+- **Rescue (2026-11-02):** KHÔNG train lại. Viết `scripts/reeval.py`: load base + `PeftModel.from_pretrained` từng adapter + `merge_and_unload` → eval lại → ghi `<ID>.reeval.json` + `<ID>.reeval.jsonl` (generation từng mẫu để chẩn đoán).
+- Sửa gốc trong `evaluate()` (`evaluators.py`): `model.eval()` + `gradient_checkpointing_disable()` + batch generate 16 (padding_side="left").
+- **Chẩn đoán xác nhận:** eval cũ chạy với gradient checkpointing còn bật → HF ép `past_key_values=None` trong generate (~100 phút/eval); `acc=0.0` là bug eval, **TRAINING KHÔNG LỖI**.
+
+### Bảng kết quả reeval (GSM8K acc, n=200, adapter step-500)
+
+| LR | GSM8K acc (%) |
+|---|---|
+| 5e-5 | 42.0 |
+| 1e-4 | 42.0 |
+| **2e-4** | **45.0 (best)** |
+| 5e-4 | 39.5 |
+| 1e-3 | 12.0 |
+
+Wall reeval: ~2.3 phút/adapter (batch 16).
+
+Loss train bước 620: `1e-4=0.484`, `2e-4=0.499`, `5e-4=0.593`, `1e-3=0.895`.
+
+### Suy luận
+
+- **(a)** `L*` = **lr2e-4** (45.0) — vừa cao nhất, vừa trùng default PEFT/paper.
+- **(b)** 5e-5/1e-4/2e-4 lệch ≤ 3 điểm ≈ nhiễu binomial eval (σ ≈ 3.5 điểm @ n=200) — dải LR thấp tương đương.
+- **(c)** 1e-3 diverge: loss 0.895 + acc 12.0 khớp nhau.
+- **(d)** 5e-4 có dấu hiệu quá cao cho model 0.5B (acc thấp hơn dù loss tăng nhẹ).
+
+### Hạn chế so sánh (Bẫy 10)
+
+Acc bảng trên lấy từ **snapshot bước 500**. `evaluate()` cuối train (bước 625) hiện đã sửa → seeds 2/3 sẽ có acc bước-625 trực tiếp. Để so 3 seeds công bằng, **s2/s3 cũng phải reeval từ adapter bước-500**.
+
+### Việc tiếp
+
+Chạy seeds 2/3 của `L*` → tính `σ_L` → ngưỡng Gate 1 = `max(1.0 điểm, 2·σ_L)`.
+
+---
+
+## Ghi chú quy trình
+
+- Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`).
+- Adapter (~336MB) không vào git — upload Kaggle Dataset `stage1-adapters`.
+- Commit code trên nhánh `main` của `lora-stack-lab`.
