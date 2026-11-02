@@ -52,6 +52,7 @@ KHÔNG ghim torch: Kaggle preinstall ~2.x build đúng ABI NCCL/CUDA của image
 - Bẫy 4: default_collate trả list cho batch → collate tường minh trong loaders.py (fix 7fa8872).
 - Cảnh báo xung đột gradio/diffusers vs huggingface-hub 0.36.2: chỉ ảnh hưởng widget UI, bỏ qua.
 - **Bẫy 6 (stage1 OOM 12.9 GB trên T4 14.6):** không bật `gradient_checkpointing` → activation batch 8×512 (~4–5 GB) + logits fp32 (2.32 GiB — chính là alloc bị từ chối) + trọng số fp16/grad (~2 GB) = ~13 GB. Sửa: `gradient_checkpointing: true` (base.yaml, +~35% step time) + `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` (bootstrap).
+- **Bẫy 7 (loss log `0.000`):** edit thêm `python -u` trong commit 6c98301 vô tình gỡ `running += loss.item()` khỏi vòng micro-batch → `running` luôn 0.0, mọi loss ghi/curve/in = 0.000 (KHÔNG phải loss thật nhỏ). Sửa 8f4f737. Chú ý: chạy test loss-curve, không chỉ 0.000.
 - **Bẫy 5 (stage1 session chết 12h):** (a) `from_pretrained` không có `device_map` → model nằm trên CPU — phải `model.to("cuda")` tường minh; (b) `DataLoader(num_workers=2)` fork sau khi HF/tokenizer đã mở threads → **deadlock** tại `next(data_iter)` đầu tiên (không crash, không log, TimeGuard không bắn vì check nằm ngoài vòng micro-batch) → `num_workers=0` (fast tokenizer của Qwen tokenize 20k mẫu tính bằng giây); (c) TimeGuard check đưa VÀO trong vòng micro-batch; (d) train in stdout mỗi 10 bước + `python -u` trong run_queue để log Kaggle hiển thị tiến độ.
 
 ---
