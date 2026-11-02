@@ -52,6 +52,7 @@ def main() -> int:
     ap.add_argument("--eval-size", type=int, default=200)
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--components", default="L", help="comma-joined codes for aggregate.py combo key")
+    ap.add_argument("--shard", default="0/1", help="i/n: handle runs with index %% n == i (2-GPU split)")
     ap.add_argument("--limit", type=int, default=0, help=">0 = eval only the first N prompts (smoke)")
     ap.add_argument("--base", default=None, help="override base model (default from ExpConfig)")
     args = ap.parse_args()
@@ -60,6 +61,12 @@ def main() -> int:
     if not runs:
         print(f"[reeval] no adapter dirs under {args.adapters}")
         return 1
+    si, sn = (int(x) for x in args.shard.split("/"))
+    mine = runs[si::sn]
+    print(f"[reeval] shard {si}/{sn}: {len(mine)}/{len(runs)} runs: {[r for r, _ in mine]}", flush=True)
+    runs = mine
+    if not runs:
+        return 0
     print(f"[reeval] {len(runs)} adapters: {[rid for rid, _ in runs]}", flush=True)
 
     out_dir = Path(args.out)
