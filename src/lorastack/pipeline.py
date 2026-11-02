@@ -181,6 +181,7 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
                     for v in terms.values():
                         loss = loss + v / cfg.grad_accum
             scaler.scale(loss).backward()
+            running += loss.item()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], cfg.max_grad_norm)
         scaler.step(optimizer)
