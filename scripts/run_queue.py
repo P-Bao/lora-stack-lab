@@ -64,7 +64,9 @@ def main() -> int:
                 code = p.poll()
                 if code is not None:
                     failures += int(code != 0)
-                    print(f"[run_queue] {Path(p.args[3]).stem} exit={code}")
+                    # "-u" shifts arg indices — locate --config positionally
+                    idx = p.args.index("--config")
+                    print(f"[run_queue] {Path(p.args[idx + 1]).stem} exit={code}")
                     running.pop(p)
             if not running:
                 break

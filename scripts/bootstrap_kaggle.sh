@@ -2,6 +2,7 @@
 # Kaggle bootstrap: install pinned stack (NOT torch — image's torch must stay), verify env, report.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True  # T4: fight fragmentation (2.3 GiB logits alloc)
 
 python -m pip install --quiet -r requirements-kaggle.txt
 # Kaggle image ships torchao 0.10.0; peft >=0.19 RAISES on old torchao even when unused

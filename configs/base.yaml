@@ -12,7 +12,9 @@ grad_accum: 4
 lr: 2e-4
 seed: 1
 fp16: true
-gradient_checkpointing: false
+# ON: without it, activations (batch 8x512) + fp32 logits (2.3 GiB) push 0.5B fp16
+# training to ~13 GB on T4 14.6 -> OOM (stage1, 2026-11-02). Costs ~+35% step time.
+gradient_checkpointing: true
 timeguard_minutes: 630
 ckpt_every_steps: 500
 out_dir: results
