@@ -1,0 +1,5 @@
+# Stage 1 L* winner, seeds 2-3 of 3 for sigma_L (Gate 1 threshold); vs s1 via step-500 reeval.
+exp_id: stage1-L-lr2e-4-r32-s3
+components: [L]
+lr: 2e-4
+seed: 3
