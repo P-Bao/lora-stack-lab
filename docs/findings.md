@@ -75,6 +75,24 @@ Chạy seeds 2/3 của `L*` → tính `σ_L` → ngưỡng Gate 1 = `max(1.0 đi
 
 ---
 
+## Stage 1 bổ sung — Seeds 2/3 & sigma_L (2026-11-03)
+
+- Seeds 2/3 chạy trên commit `41d24ba` (notebook tự reeval bước-500 sau queue). Train ~60 phút/run, eval bước-625 trực tiếp đã sửa (batch 16).
+- Kết quả L* (lr2e-4, r32):
+
+| Seed | acc@500 (reeval) | acc@625 (direct) |
+|---|---|---|
+| s1 | 45.0 | — (eval cũ hỏng) |
+| s2 | 45.0 | 41.5 |
+| s3 | 43.5 | 42.5 |
+
+- **sigma_L = 0.87** (n=3, sample stdev) → **Gate 1 threshold = max(1.0, 2·sigma_L) = 1.73 điểm**. Đường tie = 42.8, đường improve = 46.2 (đều tính trên acc@500).
+- Quan sát: acc@625 thấp hơn acc@500 khoảng 2.5 điểm (s2 −3.5, s3 −1.0) — trong phạm vi nhiễu binomial (sigma ≈ 3.5 @ n=200), nghi overfit nhẹ 125 bước cuối. **Quyết định: mọi so sánh Gate dùng acc@500** (reeval từ adapter snapshot) để tránh lệch hệ thống giữa các stage.
+- Baseline L* rất đồng nhất (sigma 0.87 << 3.5 nhiễu eval) → Gate 1 hẹp (1.73 điểm) là hợp lý, stage2 sẽ bị soi kỹ.
+- **Stage 2 MỞ**: kế hoạch chi tiết tại `docs/stage2-plan.md` (nhánh main, repo lora-stack-lab).
+
+---
+
 ## Ghi chú quy trình
 
 - Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`).
