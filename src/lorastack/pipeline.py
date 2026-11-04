@@ -177,7 +177,10 @@ def train(cfg: ExpConfig, model, tok, ctx, optimizer) -> dict:
                 out = model(**batch)
                 loss = out.loss / cfg.grad_accum
                 for h in loss_hooks:  # 5. loss (B/Bp/Br): weighted regularizers
-                    terms = h.loss_terms(cfg, model, ctx, batch, lambda b: base_forward(model, b))
+                    # reuse this forward's logits: a second student forward doubled the
+                    # activation graph and OOM'd Bp on T4 (decisions.md Bẫy 11)
+                    terms = h.loss_terms(cfg, model, ctx, batch, lambda b: base_forward(model, b),
+                                         logits_ft=out.logits)
                     for v in terms.values():
                         loss = loss + v / cfg.grad_accum
             scaler.scale(loss).backward()

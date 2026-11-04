@@ -295,6 +295,35 @@ def test_t8_reference_forward_skipped_when_lambda1_zero():
     assert set(terms) == {"diversity", "svdr"}
 
 
+def test_t10_provided_logits_match_internal_forward():
+    """Pipeline passes its task-loss logits (Bẫy 11 OOM fix): same reg values and grads,
+    and no second student forward happens when logits are provided."""
+    ref_logits = torch.randn(2, 5, 8)
+
+    def run(provide: bool):
+        model = MiniPissa()
+        batch = _batch(B=2, L=5, V=8)
+        cfg = _cfg(components=["Br"], balora_lambda1=1e-2, balora_lambda2=1e-1,
+                   balora_lambda3=1e-1, balora_distill_temp=2.0)
+        ctx = _ctx(components=["Br"])
+        base = lambda b: SimpleNamespace(logits=ref_logits)  # deterministic W0 reference
+        kw = {}
+        if provide:
+            kw["logits_ft"] = model(**batch).logits
+            model.forward = lambda *a, **k: (_ for _ in ()).throw(
+                AssertionError("loss_terms ran a second student forward"))
+        terms = br.loss_terms(cfg, model, ctx, batch, base, **kw)
+        sum(terms.values()).backward()
+        return {k: _v(v) for k, v in terms.items()}, model.lora_A.grad.detach().clone()
+
+    a, ga = run(False)
+    b, gb = run(True)
+    assert a.keys() == b.keys() == {"consistency", "diversity", "svdr"}
+    for k in a:
+        assert math.isclose(a[k], b[k], rel_tol=1e-4, abs_tol=1e-7), (k, a[k], b[k])
+    assert torch.allclose(ga, gb, atol=1e-6)
+
+
 # ---------------------------------------------------------------- NLU variant sanity
 
 def test_t9_nlu_mse_covariance_exact_svd():
