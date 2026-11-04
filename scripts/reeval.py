@@ -56,6 +56,13 @@ def inherit_components(out_dir: Path, run_id: str, fallback: list[str]) -> list[
     return fallback
 
 
+def needs_merge(acfg: dict) -> bool:
+    """Merge math is only proven for plain LoRA: pissa re-derives W_res from the base at
+    load (merge untested on GPU) and stage2 holds GRALORA adapters (never merged either)
+    -> evaluate those unmerged, exactly like training-time eval (same outputs, slower)."""
+    return acfg.get("peft_type") == "LORA" and acfg.get("init_lora_weights") != "pissa"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--adapters", required=True, help="root dir containing <run_id>/adapter/")
@@ -100,12 +107,12 @@ def main() -> int:
         model = AutoModelForCausalLM.from_pretrained(base, dtype=dtype).to(device)
         model = PeftModel.from_pretrained(model, str(adapter_dir))
         acfg = json.loads((adapter_dir / "adapter_config.json").read_text(encoding="utf-8"))
-        if acfg.get("init_lora_weights") == "pissa":
-            # pissa: PEFT re-derives W_res from the original base at load; the merge math for
-            # pissa is untested on GPU -> evaluate the unmerged model (same outputs, slower)
-            print(f"[reeval] {run_id}: pissa adapter, skip merge_and_unload", flush=True)
-        else:
+        if needs_merge(acfg):
             model = model.merge_and_unload()  # LoRA merge: identical outputs, faster generate
+        else:
+            print(f"[reeval] {run_id}: peft_type={acfg.get('peft_type')} "
+                  f"pissa={acfg.get('init_lora_weights') == 'pissa'} -> skip merge_and_unload",
+                  flush=True)
         if args.limit > 0:
             cfg.data.eval_size = args.limit
 

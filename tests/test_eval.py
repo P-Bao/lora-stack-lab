@@ -49,3 +49,13 @@ def test_reeval_inherits_components(tmp_path):
     assert reeval.inherit_components(tmp_path, "bad", ["L"]) == ["L"]
     (tmp_path / "empty.json").write_text(json.dumps({"config": {}}), encoding="utf-8")
     assert reeval.inherit_components(tmp_path, "empty", ["L"]) == ["L"]
+
+
+def test_reeval_needs_merge_only_plain_lora():
+    """stage2 dataset: GRALORA adapters must not hit merge_and_unload (never run on GPU);
+    pissa re-derives W_res at load -> unmerged as well. Plain LoRA still merges."""
+    import reeval
+
+    assert reeval.needs_merge({"peft_type": "LORA"}) is True
+    assert reeval.needs_merge({"peft_type": "LORA", "init_lora_weights": "pissa"}) is False
+    assert reeval.needs_merge({"peft_type": "GRALORA", "r": 32}) is False
