@@ -45,6 +45,7 @@ import math
 
 import torch
 import torch.nn.functional as F
+import torch.utils.checkpoint  # _ckpt(): not pulled in by `import torch` alone
 
 from ..registry import register
 
@@ -52,14 +53,19 @@ CHUNK = 1024  # rows per fp32 chunk (spec section 7.4)
 
 
 def _ckpt(fn, *args):
-    """Gradient-checkpoint a chunk kernel: fp32 softmax/matmul intermediates of
-    (CHUNK=1024 rows x V=152k) ~0.6 GiB each are RECOMPUTED in backward instead of
-    retained for the whole micro-batch (Bẫy 11: Bp OOM'd at 13.4/14.6 GiB on T4).
-    Falls back to a plain call when nothing needs grad (eval / fake models).
+    """Gradient-checkpoint a chunk kernel: the fp32 intermediates of a (CHUNK x V) slice
+    are ~0.6 GiB each, so they are RECOMPUTED in backward instead of retained for the
+    whole micro-batch (Bẫy 11: Bp OOM'd at 13.4/14.6 GiB on T4).
+
+    INVARIANT (Bẫy 12): checkpoint retains every tensor input until backward, so pass
+    only what is alive anyway — the fp16 logits source, row indices, tiny aux — never a
+    per-chunk fp32 tensor or a fresh (M, V) gather. Falls back to a plain call when
+    nothing needs grad (eval / fake models).
     """
     if not any(torch.is_tensor(a) and a.requires_grad for a in args):
         return fn(*args)
     return torch.utils.checkpoint.checkpoint(fn, *args, use_reentrant=False)
+
 
 # output dict keys (task contract): "consistency" / "diversity" / "svdr"
 
@@ -105,9 +111,19 @@ def _cr_mask(batch: dict, logits: torch.Tensor) -> torch.Tensor:
     return m
 
 
-def _pooled_rows(logits: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    """Select non-masked positions -> (M, V) matrix (U6: one matrix per batch)."""
-    return logits[mask]
+def _flat(logits: torch.Tensor) -> torch.Tensor:
+    """(B, L, V) -> (B*L, V) view (2D logits pass through).
+
+    Chunk kernels index rows of this instead of gathering the whole masked (M, V)
+    matrix up front: that gather is ~1.2 GiB at 0.5B/8x512/V=152k and, as a checkpoint
+    input, would be retained until backward (Bẫy 12).
+    """
+    return logits.reshape(-1, logits.shape[-1])
+
+
+def _mask_index(mask: torch.Tensor) -> torch.Tensor:
+    """Row indices of a (B, L)/(B*L,) bool mask into the flattened (B*L, V) logits view."""
+    return mask.reshape(-1).nonzero(as_tuple=True)[0]
 
 
 def _snapshot_adapter_params(model, ctx) -> None:
@@ -146,30 +162,30 @@ def _w0_forward(model, ctx, batch) -> torch.Tensor:
     return out.logits.detach()
 
 
-def _cr_chunk(rows_chunk: torch.Tensor, lp_pt: torch.Tensor, p_pt: torch.Tensor, tau: float) -> torch.Tensor:
-    lp_ft = F.log_softmax(rows_chunk.float() / tau, dim=-1)
+def _cr_chunk(flat_ft: torch.Tensor, flat_pt: torch.Tensor, idx_chunk: torch.Tensor,
+              tau: float) -> torch.Tensor:
+    rows_ft = flat_ft.index_select(0, idx_chunk)
+    rows_pt = flat_pt.index_select(0, idx_chunk)
+    lp_ft = F.log_softmax(rows_ft.float() / tau, dim=-1)
+    with torch.no_grad():  # teacher probs are constants: recomputed here, never retained
+        lp_pt = F.log_softmax(rows_pt.float() / tau, dim=-1)
+        p_pt = lp_pt.exp()
     return (p_pt * (lp_pt - lp_ft)).sum()
 
 
 def _cr_nlg(logits_ft: torch.Tensor, logits_ref: torch.Tensor, mask, tau: float) -> torch.Tensor:
     """KL(P_pt || P_ft) per eq 9, response tokens only, chunked fp32 (checkpointed),
     scaled by tau^2 (U4)."""
-    rows_ft = logits_ft[mask]  # (M, V), keeps grad
-    rows_pt = logits_ref[mask].detach()
+    flat_ft, flat_pt = _flat(logits_ft), _flat(logits_ref).detach()
+    idx = _mask_index(mask)
     total = torch.zeros((), dtype=torch.float32, device=logits_ft.device)
-    count = 0
-    for i in range(0, rows_ft.shape[0], CHUNK):
-        chunk = rows_ft[i : i + CHUNK]
-        with torch.no_grad():  # teacher probs are constants -> computed once, not checkpointed
-            lp_pt = F.log_softmax(rows_pt[i : i + CHUNK].float() / tau, dim=-1)
-            p_pt = lp_pt.exp()
-        total = total + _ckpt(_cr_chunk, chunk, lp_pt, p_pt, tau)
-        count += chunk.shape[0]
-    return tau * tau * total / max(count, 1)
+    for i in range(0, idx.numel(), CHUNK):
+        total = total + _ckpt(_cr_chunk, flat_ft, flat_pt, idx[i : i + CHUNK], tau)
+    return tau * tau * total / max(idx.numel(), 1)
 
 
-def _dr_chunk(rows_chunk: torch.Tensor, top_k: int) -> torch.Tensor:
-    z = rows_chunk.float()
+def _dr_chunk(flat_ft: torch.Tensor, idx_chunk: torch.Tensor, top_k: int) -> torch.Tensor:
+    z = flat_ft.index_select(0, idx_chunk).float()
     if top_k and top_k > 0:
         z = z.topk(min(top_k, z.shape[-1]), dim=-1).values
     p = torch.softmax(z, dim=-1)
@@ -180,53 +196,63 @@ def _dr_chunk(rows_chunk: torch.Tensor, top_k: int) -> torch.Tensor:
 def _dr_nlg(logits_ft: torch.Tensor, mask, top_k: int) -> torch.Tensor:
     """-H(P_ft) per eq 10 (full vocab; top-k renormalized proxy if top_k > 0), mean over
     valid tokens, chunked + checkpointed fp32."""
-    rows = logits_ft[mask]
+    flat = _flat(logits_ft)
+    idx = _mask_index(mask)
     total = torch.zeros((), dtype=torch.float32, device=logits_ft.device)
-    count = 0
-    for i in range(0, rows.shape[0], CHUNK):
-        chunk = rows[i : i + CHUNK]
-        total = total + _ckpt(_dr_chunk, chunk, top_k)
-        count += chunk.shape[0]
-    return -total / max(count, 1)
+    for i in range(0, idx.numel(), CHUNK):
+        total = total + _ckpt(_dr_chunk, flat, idx[i : i + CHUNK], top_k)
+    return -total / max(idx.numel(), 1)
 
 
 def _chunks(n: int):
     return range(0, n, CHUNK)
 
 
-def _mm(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    return a.float() @ b
+def _rows_mm(flat: torch.Tensor, idx_chunk: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """(c, V) fp32 @ (V, q): one row chunk of the flattened logits cast to fp32."""
+    return flat.index_select(0, idx_chunk).float() @ b
 
 
-def _mm_t(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    return a.float().T @ b.float()
+def _rows_mmt(flat: torch.Tensor, idx_chunk: torch.Tensor, y_chunk: torch.Tensor) -> torch.Tensor:
+    """(V, c) fp32 @ (c, q): Z^T y for one row chunk (power iteration)."""
+    return flat.index_select(0, idx_chunk).float().T @ y_chunk.float()
 
 
-def _svdr_rand(rows: torch.Tensor, k: int, p_over: int = 5, niter: int = 1) -> torch.Tensor:
+def _q_mmt_rows(q_chunk: torch.Tensor, flat: torch.Tensor, idx_chunk: torch.Tensor) -> torch.Tensor:
+    """(c, q) fp32.T @ (c, V) fp32: Q^T Z for one row chunk."""
+    return q_chunk.float().T @ flat.index_select(0, idx_chunk).float()
+
+
+def _svdr_rand(flat: torch.Tensor, k: int, p_over: int = 5, niter: int = 1,
+               idx: torch.Tensor | None = None) -> torch.Tensor:
     """Randomized-SVD top-k mass ratio (U10: p=5, niter=1), chunked (spec section 3.1).
 
-    Chunk matmuls are gradient-checkpointed: the fp32 casts of a (CHUNK x V) slice are
-    ~0.6 GiB each and the micro-batch ran out of memory holding them (Bẫy 11).
+    `flat` is the (rows, V) source and `idx` the participating rows (default: all).
+    Chunk matmuls are gradient-checkpointed, and the only large checkpoint input is
+    `flat` itself, so no (CHUNK x V) fp32 cast is retained until backward (Bẫy 11/12).
 
     Note: svdvals backward has NaN gradients for exactly-repeated singular values
     (measure-zero for real logits, which are full-rank); forward values are always safe.
     """
-    M, V = rows.shape
+    dev = flat.device
+    if idx is None:
+        idx = torch.arange(flat.shape[0], device=dev)
+    M, V = idx.numel(), flat.shape[-1]
     q = min(k + p_over, min(M, V))
     if M == 0 or q <= 0:
-        return torch.zeros((), dtype=torch.float32, device=rows.device)
-    dev = rows.device
+        return torch.zeros((), dtype=torch.float32, device=dev)
     G = torch.randn(V, q, device=dev, dtype=torch.float32)  # outside checkpoint: no RNG replay
     # Y = Z @ G (M, q), chunked over rows, autograd preserved per chunk
-    Y = torch.cat([_ckpt(_mm, rows[i : i + CHUNK], G) for i in _chunks(M)], dim=0)
+    Y = torch.cat([_ckpt(_rows_mm, flat, idx[i : i + CHUNK], G) for i in _chunks(M)], dim=0)
     for _ in range(niter):
         # power iteration Y <- Z @ (Z^T @ Y); both products chunked over M rows
         ZtY = torch.zeros(V, q, device=dev, dtype=torch.float32)
         for i in _chunks(M):
-            ZtY = ZtY + _ckpt(_mm_t, rows[i : i + CHUNK], Y[i : i + CHUNK])
-        Y = torch.cat([_ckpt(_mm, rows[i : i + CHUNK], ZtY) for i in _chunks(M)], dim=0)  # (M, q)
+            ZtY = ZtY + _ckpt(_rows_mmt, flat, idx[i : i + CHUNK], Y[i : i + CHUNK])
+        Y = torch.cat([_ckpt(_rows_mm, flat, idx[i : i + CHUNK], ZtY)
+                       for i in _chunks(M)], dim=0)  # (M, q)
     Q, _ = torch.linalg.qr(Y)  # (M, q) orthonormal
-    B = torch.cat([_ckpt(_mm_t, Q[i : i + CHUNK], rows[i : i + CHUNK])
+    B = torch.cat([_ckpt(_q_mmt_rows, Q[i : i + CHUNK], flat, idx[i : i + CHUNK])
                    for i in _chunks(M)], dim=1)  # (q, V)
     s = torch.linalg.svdvals(B)  # top-q approx singular values of Z, descending
     k = min(k, s.numel())
@@ -340,7 +366,8 @@ def loss_terms(cfg, model, ctx, batch, base_forward, logits_ft=None):
         if lam2 > 0:
             terms["diversity"] = lam2 * _dr_nlg(logits_ft, mask_tok, int(cfg.balora_top_k_entropy))
         if lam3 > 0:
-            terms["svdr"] = lam3 * _svdr_rand(_pooled_rows(logits_ft, mask_tok), int(cfg.balora_svd_k))
+            terms["svdr"] = lam3 * _svdr_rand(_flat(logits_ft), int(cfg.balora_svd_k),
+                                              idx=_mask_index(mask_tok))
         return terms
 
 

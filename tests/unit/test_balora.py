@@ -324,6 +324,38 @@ def test_t10_provided_logits_match_internal_forward():
     assert torch.allclose(ga, gb, atol=1e-6)
 
 
+def test_t11_checkpoint_inputs_never_hold_fp32_vocab_chunk(monkeypatch):
+    """Bẫy 12 regression: checkpoint retains EVERY tensor input until backward, so only
+    the shared logits source (retained anyway) and small aux tensors may cross the
+    boundary — never a (chunk, V) fp32 intermediate (that still OOM'd Bp at 13.1 GiB)."""
+    seen = []
+    real = torch.utils.checkpoint.checkpoint
+
+    def spy(fn, *args, **kw):
+        seen.append(args)
+        return real(fn, *args, **kw)
+
+    monkeypatch.setattr(torch.utils.checkpoint, "checkpoint", spy)
+    model = MiniPissa(V=64)  # V > rows so a vocab-sized tensor is distinguishable
+    batch = _batch(B=2, L=5, V=8)
+    logits = model(**batch).logits
+    ref = torch.randn(2, 5, 64)
+    cfg = _cfg(components=["Br"], balora_lambda1=1e-2, balora_lambda2=1e-1, balora_lambda3=1e-1)
+    terms = br.loss_terms(cfg, model, _ctx(components=["Br"]), batch,
+                          lambda b: SimpleNamespace(logits=ref), logits_ft=logits)
+    assert {"consistency", "diversity", "svdr"} <= set(terms)
+    assert seen, "checkpoint path not exercised"
+    src = {logits.untyped_storage().data_ptr(), ref.untyped_storage().data_ptr()}
+    aux_dim = min(logits.shape[0] * logits.shape[1], logits.shape[-1])
+    for args in seen:
+        for t in args:
+            if not torch.is_tensor(t) or not t.is_floating_point():
+                continue
+            if t.untyped_storage().data_ptr() in src:
+                continue  # the shared source logits (alive for the whole step anyway)
+            assert t.shape[-1] <= aux_dim, f"vocab-sized fp32 checkpoint input {tuple(t.shape)}"
+
+
 # ---------------------------------------------------------------- NLU variant sanity
 
 def test_t9_nlu_mse_covariance_exact_svd():

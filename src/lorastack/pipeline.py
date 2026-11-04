@@ -70,6 +70,7 @@ def build(cfg: ExpConfig):
     )
     if cfg.gradient_checkpointing:
         model.gradient_checkpointing_enable()
+        model.config.use_cache = False  # else transformers sets it on the first forward + warns every run
     if torch.cuda.is_available():
         model.to("cuda")  # explicit: from_pretrained stays on CPU without device_map
 
