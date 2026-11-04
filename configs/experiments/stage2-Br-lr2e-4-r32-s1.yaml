@@ -1,0 +1,4 @@
+# Stage 2 single-Br: BA-LoRA with GoRA init (Oi) + consistency regs - LR grid per docs/stage2-plan.md.
+exp_id: stage2-Br-lr2e-4-r32-s1
+components: [Oi, Br]
+lr: 2e-4

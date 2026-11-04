@@ -1,0 +1,11 @@
+# Stage 2 smoke: BA-LoRA with PiSSA init (W0 -> W_res, paper NLG lambdas) - 50 steps, no NaN, eval runs, JSON written.
+exp_id: E0-SMOKE-Bp-qwen05b-lr2e-4-r32-s1
+components: [Bp]
+max_steps: 50
+lr: 2e-4
+data:
+  name: metamathqa
+  subset_size: 2000
+  seq_len: 512
+  eval_name: gsm8k
+  eval_size: 20

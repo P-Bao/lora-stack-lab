@@ -1,0 +1,4 @@
+# Stage 2 single-G: GraLoRA config-only (k=2, PEFT GraloraConfig) - LR grid per docs/stage2-plan.md.
+exp_id: stage2-G-lr2e-4-r32-s1
+components: [G]
+lr: 2e-4

@@ -1,0 +1,4 @@
+# Stage 2 single-Bp: BA-LoRA with PiSSA init (W0 -> W_res, paper NLG lambdas) - LR grid per docs/stage2-plan.md.
+exp_id: stage2-Bp-lr2e-4-r32-s1
+components: [Bp]
+lr: 2e-4

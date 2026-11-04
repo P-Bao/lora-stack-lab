@@ -1,0 +1,4 @@
+# Stage 2 single-A: AltLoRA optimizer (B-first) on LoRA adapter - LR grid per docs/stage2-plan.md.
+exp_id: stage2-A-lr1e-2-r32-s1
+components: [A]
+lr: 1e-2

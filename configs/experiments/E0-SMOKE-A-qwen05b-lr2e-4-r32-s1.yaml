@@ -1,0 +1,11 @@
+# Stage 2 smoke: AltLoRA optimizer (B-first) on LoRA adapter - 50 steps, no NaN, eval runs, JSON written.
+exp_id: E0-SMOKE-A-qwen05b-lr2e-4-r32-s1
+components: [A]
+max_steps: 50
+lr: 2e-4
+data:
+  name: metamathqa
+  subset_size: 2000
+  seq_len: 512
+  eval_name: gsm8k
+  eval_size: 20
