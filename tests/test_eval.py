@@ -35,3 +35,17 @@ def test_agg_prefers_reeval(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "50.00" in out            # reeval score wins
     assert "   1    0.00" not in out  # old broken score must not appear as mean
+
+
+def test_reeval_inherits_components(tmp_path):
+    """Direct run json carries true components; fallback when absent/corrupt (stage2 gate table)."""
+    import reeval
+
+    (tmp_path / "stage2-G-lr2e-4-r32-s1.json").write_text(
+        json.dumps({"status": "done", "config": {"components": ["G"]}}), encoding="utf-8")
+    assert reeval.inherit_components(tmp_path, "stage2-G-lr2e-4-r32-s1", ["L"]) == ["G"]
+    assert reeval.inherit_components(tmp_path, "no-direct-json", ["L"]) == ["L"]      # fallback
+    (tmp_path / "bad.json").write_text("{oops", encoding="utf-8")                     # corrupt json
+    assert reeval.inherit_components(tmp_path, "bad", ["L"]) == ["L"]
+    (tmp_path / "empty.json").write_text(json.dumps({"config": {}}), encoding="utf-8")
+    assert reeval.inherit_components(tmp_path, "empty", ["L"]) == ["L"]

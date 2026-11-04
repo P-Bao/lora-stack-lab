@@ -52,13 +52,13 @@ Config gốc: `configs/experiments/stage2-<CODE>-lr<X>-r32-s1.yaml`, override t�
 
 ### Phiên A — họ L (6 runs ≈ 3h wall)
 
-1. Smoke 20 bước: G + Bp (~6 phút, bắt env bug trước khi đốt quota).
+1. Smoke 50 bước: G + Bp (~8 phút, bắt env bug trước khi đốt quota).
 2. Thứ tự RUN_IDS (LR khả quan nhất trước — session chết giữa chừng vẫn có dữ liệu dùng được):
    `G-lr2e-4, G-lr1e-4, G-lr5e-4, Bp-lr2e-4, Bp-lr1e-4, Bp-lr5e-4`
 
 ### Phiên B — init-heavy + A (11 runs ≈ 5.5h wall)
 
-1. Smoke 20 bước: O + Oi + Br + A (~12 phút).
+1. Smoke 50 bước: O + Oi + Br + A (~15 phút).
 2. Thứ tự RUN_IDS:
    `O-lr1e-4, O-lr5e-5, O-lr2e-4, Oi-lr1e-4, Oi-lr2e-4, Br-lr1e-4, Br-lr2e-4, A-lr2e-4, A-lr1e-3, A-lr5e-3, A-lr1e-2`
 

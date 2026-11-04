@@ -45,6 +45,17 @@ def find_adapter_runs(root: str) -> list[tuple[str, Path]]:
     return runs
 
 
+def inherit_components(out_dir: Path, run_id: str, fallback: list[str]) -> list[str]:
+    """Direct run json (written by run_exp) carries the true components; --components is the fallback."""
+    try:
+        comps = (json.loads((out_dir / f"{run_id}.json").read_text(encoding="utf-8")).get("config") or {}).get("components")
+        if comps:
+            return list(comps)
+    except (OSError, ValueError):
+        pass
+    return fallback
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--adapters", required=True, help="root dir containing <run_id>/adapter/")
@@ -80,7 +91,7 @@ def main() -> int:
             print(f"[reeval] {run_id} already done, skip", flush=True)
             continue
         t0 = time.time()
-        cfg = ExpConfig(exp_id=run_id, components=args.components.split(","))
+        cfg = ExpConfig(exp_id=run_id, components=inherit_components(out_dir, run_id, args.components.split(",")))
         cfg.data.eval_size = args.eval_size
         cfg.data.eval_batch_size = args.batch_size
         base = args.base or cfg.model_name
@@ -88,7 +99,13 @@ def main() -> int:
         tok = AutoTokenizer.from_pretrained(base)
         model = AutoModelForCausalLM.from_pretrained(base, dtype=dtype).to(device)
         model = PeftModel.from_pretrained(model, str(adapter_dir))
-        model = model.merge_and_unload()  # LoRA merge: identical outputs, faster generate
+        acfg = json.loads((adapter_dir / "adapter_config.json").read_text(encoding="utf-8"))
+        if acfg.get("init_lora_weights") == "pissa":
+            # pissa: PEFT re-derives W_res from the original base at load; the merge math for
+            # pissa is untested on GPU -> evaluate the unmerged model (same outputs, slower)
+            print(f"[reeval] {run_id}: pissa adapter, skip merge_and_unload", flush=True)
+        else:
+            model = model.merge_and_unload()  # LoRA merge: identical outputs, faster generate
         if args.limit > 0:
             cfg.data.eval_size = args.limit
 
@@ -114,7 +131,7 @@ def main() -> int:
         write_json(str(done), rec)
         n_digit = sum(1 for s in samples if s["pred"] is not None)
         print(f"[reeval] {run_id} acc={metrics['gsm8k_acc']:.4f} "
-              f"preds_with_digits={n_digit}/{len(samples)} {rec['wall_time_s']}s", flush=True)
+              f"components={cfg.components} preds_with_digits={n_digit}/{len(samples)} {rec['wall_time_s']}s", flush=True)
         del model
         torch.cuda.empty_cache() if device == "cuda" else None
     return 0
