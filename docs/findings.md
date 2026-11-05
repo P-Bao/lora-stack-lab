@@ -160,6 +160,27 @@ Suy luận tạm: Br/Oi best ≈ A best (48.5), đều trên L* (44.5 @500) → 
 
 **Kế tiếp:** reeval @500 cho 10 adapter (Br×2, Oi×2, O×2, A×4) qua dataset `stage2-adapter-all` (10 adapter + 10 run json; notebook đã set sẵn `STAGE="reeval"`) → aggregate + Gate 2 cho Br/Oi/O/A → stage3.
 
+### Reeval @500 — Gate 2 CHỐT (2026-11-05)
+
+Dataset mixed (16 adapter, slug `stage2-adapter`), 2 shard, ~25'. Nhãn components fallback "A" trên mọi file (Bẫy 16 — dataset thiếu run json) đã patch cục bộ; số đúng (eval deterministic — G/Bp trùng số cũ).
+
+| Run | acc@500 | acc@625 | Gate 2 (improve ≥ 46.2, tie ≥ 42.8) |
+|---|---|---|---|
+| G lr1e-4 | **50.0** | 45.5 | **IMPROVE** |
+| A lr5e-3 | **49.5** | 47.0 | **IMPROVE** |
+| A lr1e-2 | 48.5 | 47.0 | IMPROVE |
+| A lr2e-4 | 48.0 | 48.5 | IMPROVE |
+| A lr1e-3 | 47.5 | 46.5 | IMPROVE |
+| Br lr2e-4 | **47.5** | 43.5 | **IMPROVE** |
+| Oi lr2e-4 | **47.0** | 45.0 | **IMPROVE** |
+| Oi lr1e-4 | 45.5 | 48.0 | tie |
+| O lr1e-4 | 46.0 | 46.0 | tie (46.0 < 46.2) |
+| O lr2e-4 | 44.5 | 42.0 | tie |
+| Br lr1e-4 | 44.0 | 48.5 | tie |
+| Bp lr1e-4 (best) | 37.5 | 37.5 | FAIL |
+
+Suy luận: (1) **cả 4 thành phần chồng được qua Gate 2** → TRIAD = G+Oi+A, TETRAD-R = G+Oi+A+Br; TETRAD-P chết; single-b không cần. (2) **A bền LR nhất** — 4/4 grid trên đường improve; G nhạy nhất (5e-4 → 41.0). (3) Br/Oi flip LR giữa @500/@625 (Br 1e-4: 48.5@625 nhưng 44.0@500) → nhiễu n=200 (σ≈3.5), không đọc quá kỹ thứ hạng LR; combo quét {1e-4, 2e-4} + 5e-4 edge. (4) O = tie đúng vai info-only (không vào combo). Aggregate sau khi bỏ E0-SMOKE (n=3 cho G/Bp): A 48.38±0.85, Oi 46.25, Oi+Br 45.75, O+L 45.25, G 46.00, Bp 29.67.
+
 ---
 
 ## Ghi chú quy trình
