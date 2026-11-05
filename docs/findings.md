@@ -140,6 +140,28 @@ Suy luận tạm: A bền LR (spread 2.0 ≈ nhiễu binomial σ≈3.5) — grid
 
 ---
 
+## Stage 2 — Phiên 7-run: Br/Oi/O xong 6/7, O5e-5 OOM (2026-11-05)
+
+Chạy trên commit `fa46280` (sau fix Bẫy 13/14). 6/7 run xong; O-lr5e-5 chết OOM ở probe (Bẫy 15 — run_queue gán GPU theo parity, đè lên GPU đang có run train, 1 phút chồng lấp là đủ). Reeval trong phiên lại mất vì `check=True` (lần 4) → tải tay `/kaggle/working`.
+
+### Br / Oi / O — direct acc@625 (n=200, r32, s1) — Gate 2 CHỜ reeval @500
+
+| Run | acc@625 | wall |
+|---|---|---|
+| Br lr1e-4 | **48.5** | 114' |
+| Br lr2e-4 | 43.5 | 114' |
+| Oi lr1e-4 | **48.0** | 60' |
+| Oi lr2e-4 | 45.0 | 60' |
+| O lr1e-4 | 46.0 | 60' |
+| O lr2e-4 | 42.0 | 60' |
+| O lr5e-5 | OOM (Bẫy 15) | — |
+
+Suy luận tạm: Br/Oi best ≈ A best (48.5), đều trên L* (44.5 @500) → 4 method còn lại đều hứa hẹn cho TRIAD/TETRAD-R. Br bền hơn Bp rõ (48.5 vs 37.5 cùng LR 1e-4) → GoRA init (Oi) khắc phục điểm yếu init PiSSA của Bp. O yếu nhất nhưng vẫn trên tie — O chỉ mang thông tin (không vào combo). O5e-5: hoãn rerun (O không vào combo; nếu cần đủ grid, nhét vào đầu phiên stage3).
+
+**Kế tiếp:** reeval @500 cho 10 adapter (Br×2, Oi×2, O×2, A×4) qua dataset `stage2-adapter-all` (10 adapter + 10 run json; notebook đã set sẵn `STAGE="reeval"`) → aggregate + Gate 2 cho Br/Oi/O/A → stage3.
+
+---
+
 ## Ghi chú quy trình
 
 - Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`, `stage2/`).

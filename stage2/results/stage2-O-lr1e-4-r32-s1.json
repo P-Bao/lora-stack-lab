@@ -1,0 +1,519 @@
+{
+  "status": "done",
+  "step": 625,
+  "train_loss_curve": [
+    {
+      "step": 10,
+      "loss": 0.5724
+    },
+    {
+      "step": 20,
+      "loss": 0.5565
+    },
+    {
+      "step": 30,
+      "loss": 0.5073
+    },
+    {
+      "step": 40,
+      "loss": 0.5143
+    },
+    {
+      "step": 50,
+      "loss": 0.5053
+    },
+    {
+      "step": 60,
+      "loss": 0.5308
+    },
+    {
+      "step": 70,
+      "loss": 0.5216
+    },
+    {
+      "step": 80,
+      "loss": 0.518
+    },
+    {
+      "step": 90,
+      "loss": 0.4986
+    },
+    {
+      "step": 100,
+      "loss": 0.5248
+    },
+    {
+      "step": 110,
+      "loss": 0.5068
+    },
+    {
+      "step": 120,
+      "loss": 0.5039
+    },
+    {
+      "step": 130,
+      "loss": 0.5066
+    },
+    {
+      "step": 140,
+      "loss": 0.4851
+    },
+    {
+      "step": 150,
+      "loss": 0.5122
+    },
+    {
+      "step": 160,
+      "loss": 0.4985
+    },
+    {
+      "step": 170,
+      "loss": 0.5157
+    },
+    {
+      "step": 180,
+      "loss": 0.5032
+    },
+    {
+      "step": 190,
+      "loss": 0.5115
+    },
+    {
+      "step": 200,
+      "loss": 0.5281
+    },
+    {
+      "step": 210,
+      "loss": 0.5236
+    },
+    {
+      "step": 220,
+      "loss": 0.5143
+    },
+    {
+      "step": 230,
+      "loss": 0.4838
+    },
+    {
+      "step": 240,
+      "loss": 0.5027
+    },
+    {
+      "step": 250,
+      "loss": 0.5105
+    },
+    {
+      "step": 260,
+      "loss": 0.5333
+    },
+    {
+      "step": 270,
+      "loss": 0.5129
+    },
+    {
+      "step": 280,
+      "loss": 0.4975
+    },
+    {
+      "step": 290,
+      "loss": 0.5019
+    },
+    {
+      "step": 300,
+      "loss": 0.4909
+    },
+    {
+      "step": 310,
+      "loss": 0.4904
+    },
+    {
+      "step": 320,
+      "loss": 0.5087
+    },
+    {
+      "step": 330,
+      "loss": 0.4675
+    },
+    {
+      "step": 340,
+      "loss": 0.5114
+    },
+    {
+      "step": 350,
+      "loss": 0.5217
+    },
+    {
+      "step": 360,
+      "loss": 0.5127
+    },
+    {
+      "step": 370,
+      "loss": 0.5114
+    },
+    {
+      "step": 380,
+      "loss": 0.5076
+    },
+    {
+      "step": 390,
+      "loss": 0.482
+    },
+    {
+      "step": 400,
+      "loss": 0.5282
+    },
+    {
+      "step": 410,
+      "loss": 0.5237
+    },
+    {
+      "step": 420,
+      "loss": 0.5405
+    },
+    {
+      "step": 430,
+      "loss": 0.4952
+    },
+    {
+      "step": 440,
+      "loss": 0.4886
+    },
+    {
+      "step": 450,
+      "loss": 0.5257
+    },
+    {
+      "step": 460,
+      "loss": 0.538
+    },
+    {
+      "step": 470,
+      "loss": 0.506
+    },
+    {
+      "step": 480,
+      "loss": 0.4893
+    },
+    {
+      "step": 490,
+      "loss": 0.514
+    },
+    {
+      "step": 500,
+      "loss": 0.5071
+    },
+    {
+      "step": 510,
+      "loss": 0.5257
+    },
+    {
+      "step": 520,
+      "loss": 0.5094
+    },
+    {
+      "step": 530,
+      "loss": 0.4781
+    },
+    {
+      "step": 540,
+      "loss": 0.4908
+    },
+    {
+      "step": 550,
+      "loss": 0.4933
+    },
+    {
+      "step": 560,
+      "loss": 0.4972
+    },
+    {
+      "step": 570,
+      "loss": 0.4819
+    },
+    {
+      "step": 580,
+      "loss": 0.5168
+    },
+    {
+      "step": 590,
+      "loss": 0.4817
+    },
+    {
+      "step": 600,
+      "loss": 0.4807
+    },
+    {
+      "step": 610,
+      "loss": 0.5221
+    },
+    {
+      "step": 620,
+      "loss": 0.4899
+    }
+  ],
+  "metrics": {
+    "gsm8k_acc": 0.46,
+    "n_eval": 200
+  },
+  "wall_time_s": 3627.0,
+  "peak_mem_mb": 10150,
+  "resumed_from": null,
+  "id": "stage2-O-lr1e-4-r32-s1",
+  "git_commit": "fa46280a0ffd0953a7ae9fdc64a92f975686414a",
+  "seed": 1,
+  "impl": {
+    "O": "reimpl",
+    "L": "peft"
+  },
+  "init_mode": "default",
+  "lr": 0.0001,
+  "rank": 32,
+  "k": null,
+  "rank_per_layer": {
+    "model.layers.0.self_attn.q_proj": 16,
+    "model.layers.0.self_attn.k_proj": 72,
+    "model.layers.0.self_attn.v_proj": 128,
+    "model.layers.0.self_attn.o_proj": 82,
+    "model.layers.0.mlp.gate_proj": 16,
+    "model.layers.0.mlp.up_proj": 17,
+    "model.layers.0.mlp.down_proj": 17,
+    "model.layers.1.self_attn.q_proj": 23,
+    "model.layers.1.self_attn.k_proj": 128,
+    "model.layers.1.self_attn.v_proj": 128,
+    "model.layers.1.self_attn.o_proj": 128,
+    "model.layers.1.mlp.gate_proj": 16,
+    "model.layers.1.mlp.up_proj": 17,
+    "model.layers.1.mlp.down_proj": 18,
+    "model.layers.2.self_attn.q_proj": 26,
+    "model.layers.2.self_attn.k_proj": 128,
+    "model.layers.2.self_attn.v_proj": 128,
+    "model.layers.2.self_attn.o_proj": 103,
+    "model.layers.2.mlp.gate_proj": 16,
+    "model.layers.2.mlp.up_proj": 19,
+    "model.layers.2.mlp.down_proj": 21,
+    "model.layers.3.self_attn.q_proj": 42,
+    "model.layers.3.self_attn.k_proj": 128,
+    "model.layers.3.self_attn.v_proj": 128,
+    "model.layers.3.self_attn.o_proj": 100,
+    "model.layers.3.mlp.gate_proj": 18,
+    "model.layers.3.mlp.up_proj": 23,
+    "model.layers.3.mlp.down_proj": 23,
+    "model.layers.4.self_attn.q_proj": 42,
+    "model.layers.4.self_attn.k_proj": 128,
+    "model.layers.4.self_attn.v_proj": 128,
+    "model.layers.4.self_attn.o_proj": 121,
+    "model.layers.4.mlp.gate_proj": 17,
+    "model.layers.4.mlp.up_proj": 23,
+    "model.layers.4.mlp.down_proj": 24,
+    "model.layers.5.self_attn.q_proj": 48,
+    "model.layers.5.self_attn.k_proj": 128,
+    "model.layers.5.self_attn.v_proj": 128,
+    "model.layers.5.self_attn.o_proj": 122,
+    "model.layers.5.mlp.gate_proj": 16,
+    "model.layers.5.mlp.up_proj": 22,
+    "model.layers.5.mlp.down_proj": 24,
+    "model.layers.6.self_attn.q_proj": 43,
+    "model.layers.6.self_attn.k_proj": 128,
+    "model.layers.6.self_attn.v_proj": 128,
+    "model.layers.6.self_attn.o_proj": 104,
+    "model.layers.6.mlp.gate_proj": 17,
+    "model.layers.6.mlp.up_proj": 23,
+    "model.layers.6.mlp.down_proj": 24,
+    "model.layers.7.self_attn.q_proj": 74,
+    "model.layers.7.self_attn.k_proj": 128,
+    "model.layers.7.self_attn.v_proj": 128,
+    "model.layers.7.self_attn.o_proj": 89,
+    "model.layers.7.mlp.gate_proj": 16,
+    "model.layers.7.mlp.up_proj": 22,
+    "model.layers.7.mlp.down_proj": 23,
+    "model.layers.8.self_attn.q_proj": 34,
+    "model.layers.8.self_attn.k_proj": 128,
+    "model.layers.8.self_attn.v_proj": 128,
+    "model.layers.8.self_attn.o_proj": 112,
+    "model.layers.8.mlp.gate_proj": 16,
+    "model.layers.8.mlp.up_proj": 19,
+    "model.layers.8.mlp.down_proj": 20,
+    "model.layers.9.self_attn.q_proj": 36,
+    "model.layers.9.self_attn.k_proj": 128,
+    "model.layers.9.self_attn.v_proj": 128,
+    "model.layers.9.self_attn.o_proj": 83,
+    "model.layers.9.mlp.gate_proj": 16,
+    "model.layers.9.mlp.up_proj": 18,
+    "model.layers.9.mlp.down_proj": 18,
+    "model.layers.10.self_attn.q_proj": 47,
+    "model.layers.10.self_attn.k_proj": 128,
+    "model.layers.10.self_attn.v_proj": 128,
+    "model.layers.10.self_attn.o_proj": 120,
+    "model.layers.10.mlp.gate_proj": 16,
+    "model.layers.10.mlp.up_proj": 16,
+    "model.layers.10.mlp.down_proj": 17,
+    "model.layers.11.self_attn.q_proj": 23,
+    "model.layers.11.self_attn.k_proj": 91,
+    "model.layers.11.self_attn.v_proj": 128,
+    "model.layers.11.self_attn.o_proj": 57,
+    "model.layers.11.mlp.gate_proj": 16,
+    "model.layers.11.mlp.up_proj": 16,
+    "model.layers.11.mlp.down_proj": 16,
+    "model.layers.12.self_attn.q_proj": 33,
+    "model.layers.12.self_attn.k_proj": 128,
+    "model.layers.12.self_attn.v_proj": 128,
+    "model.layers.12.self_attn.o_proj": 80,
+    "model.layers.12.mlp.gate_proj": 16,
+    "model.layers.12.mlp.up_proj": 16,
+    "model.layers.12.mlp.down_proj": 16,
+    "model.layers.13.self_attn.q_proj": 21,
+    "model.layers.13.self_attn.k_proj": 128,
+    "model.layers.13.self_attn.v_proj": 128,
+    "model.layers.13.self_attn.o_proj": 39,
+    "model.layers.13.mlp.gate_proj": 16,
+    "model.layers.13.mlp.up_proj": 16,
+    "model.layers.13.mlp.down_proj": 16,
+    "model.layers.14.self_attn.q_proj": 23,
+    "model.layers.14.self_attn.k_proj": 128,
+    "model.layers.14.self_attn.v_proj": 128,
+    "model.layers.14.self_attn.o_proj": 56,
+    "model.layers.14.mlp.gate_proj": 16,
+    "model.layers.14.mlp.up_proj": 16,
+    "model.layers.14.mlp.down_proj": 16,
+    "model.layers.15.self_attn.q_proj": 16,
+    "model.layers.15.self_attn.k_proj": 65,
+    "model.layers.15.self_attn.v_proj": 91,
+    "model.layers.15.self_attn.o_proj": 30,
+    "model.layers.15.mlp.gate_proj": 16,
+    "model.layers.15.mlp.up_proj": 16,
+    "model.layers.15.mlp.down_proj": 16,
+    "model.layers.16.self_attn.q_proj": 16,
+    "model.layers.16.self_attn.k_proj": 35,
+    "model.layers.16.self_attn.v_proj": 67,
+    "model.layers.16.self_attn.o_proj": 16,
+    "model.layers.16.mlp.gate_proj": 16,
+    "model.layers.16.mlp.up_proj": 16,
+    "model.layers.16.mlp.down_proj": 16,
+    "model.layers.17.self_attn.q_proj": 16,
+    "model.layers.17.self_attn.k_proj": 90,
+    "model.layers.17.self_attn.v_proj": 128,
+    "model.layers.17.self_attn.o_proj": 23,
+    "model.layers.17.mlp.gate_proj": 16,
+    "model.layers.17.mlp.up_proj": 16,
+    "model.layers.17.mlp.down_proj": 16,
+    "model.layers.18.self_attn.q_proj": 16,
+    "model.layers.18.self_attn.k_proj": 67,
+    "model.layers.18.self_attn.v_proj": 79,
+    "model.layers.18.self_attn.o_proj": 22,
+    "model.layers.18.mlp.gate_proj": 16,
+    "model.layers.18.mlp.up_proj": 16,
+    "model.layers.18.mlp.down_proj": 16,
+    "model.layers.19.self_attn.q_proj": 16,
+    "model.layers.19.self_attn.k_proj": 50,
+    "model.layers.19.self_attn.v_proj": 86,
+    "model.layers.19.self_attn.o_proj": 17,
+    "model.layers.19.mlp.gate_proj": 16,
+    "model.layers.19.mlp.up_proj": 16,
+    "model.layers.19.mlp.down_proj": 16,
+    "model.layers.20.self_attn.q_proj": 16,
+    "model.layers.20.self_attn.k_proj": 128,
+    "model.layers.20.self_attn.v_proj": 127,
+    "model.layers.20.self_attn.o_proj": 16,
+    "model.layers.20.mlp.gate_proj": 16,
+    "model.layers.20.mlp.up_proj": 16,
+    "model.layers.20.mlp.down_proj": 16,
+    "model.layers.21.self_attn.q_proj": 16,
+    "model.layers.21.self_attn.k_proj": 28,
+    "model.layers.21.self_attn.v_proj": 35,
+    "model.layers.21.self_attn.o_proj": 16,
+    "model.layers.21.mlp.gate_proj": 16,
+    "model.layers.21.mlp.up_proj": 16,
+    "model.layers.21.mlp.down_proj": 16,
+    "model.layers.22.self_attn.q_proj": 16,
+    "model.layers.22.self_attn.k_proj": 20,
+    "model.layers.22.self_attn.v_proj": 27,
+    "model.layers.22.self_attn.o_proj": 16,
+    "model.layers.22.mlp.gate_proj": 16,
+    "model.layers.22.mlp.up_proj": 16,
+    "model.layers.22.mlp.down_proj": 16,
+    "model.layers.23.self_attn.q_proj": 16,
+    "model.layers.23.self_attn.k_proj": 16,
+    "model.layers.23.self_attn.v_proj": 33,
+    "model.layers.23.self_attn.o_proj": 16,
+    "model.layers.23.mlp.gate_proj": 16,
+    "model.layers.23.mlp.up_proj": 16,
+    "model.layers.23.mlp.down_proj": 16
+  },
+  "rank_budget_deviation": 0,
+  "config": {
+    "exp_id": "stage2-O-lr1e-4-r32-s1",
+    "components": [
+      "O",
+      "L"
+    ],
+    "impl": {},
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "rank": 32,
+    "gralora_k": 2,
+    "alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "gora_n_batches": 64,
+    "gora_r_min": null,
+    "gora_r_max": null,
+    "gora_gamma": null,
+    "gora_use_rslora": false,
+    "lr_ratio_ba": 1.0,
+    "altlora_momentum": 0.9,
+    "altlora_order": "B_first",
+    "altlora_variant": "altlora",
+    "altlora_ridge": 1e-06,
+    "balora_variant": "nlg",
+    "balora_lambda1": 1e-05,
+    "balora_lambda2": 0.1,
+    "balora_lambda3": 0.1,
+    "balora_distill_temp": 2.0,
+    "balora_top_k_entropy": 0,
+    "balora_svd_k": 10,
+    "balora_schedule": "spec42",
+    "balora_warmup_ratio": 0.2,
+    "balora_ramp_up_ratio": 0.05,
+    "lr": 0.0001,
+    "seed": 1,
+    "max_steps": -1,
+    "epochs": 1.0,
+    "batch_size": 8,
+    "grad_accum": 4,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.0,
+    "max_grad_norm": 1.0,
+    "fp16": true,
+    "gradient_checkpointing": true,
+    "timeguard_minutes": 630,
+    "ckpt_every_steps": 500,
+    "data": {
+      "name": "metamathqa",
+      "subset_size": 20000,
+      "seq_len": 512,
+      "eval_name": "gsm8k",
+      "eval_size": 200,
+      "eval_batch_size": 16
+    },
+    "out_dir": "/kaggle/working/results",
+    "ckpt_dir": "/kaggle/working/ckpt"
+  },
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "datasets": "4.8.5",
+    "cuda_available": true,
+    "gpu_name": "Tesla T4",
+    "gpu_count": 1,
+    "gpu_vram_total_gb": 14.6
+  },
+  "total_wall_time_s": 3724.1
+}
