@@ -40,6 +40,8 @@ def main() -> int:
     for f in sorted(Path(args.results).rglob("*.json")):
         if f.name.endswith(".FAILED.json") or f.name.endswith(".config.yaml") or f.name.endswith(".log.jsonl"):
             continue
+        if f.stem.startswith("E0-SMOKE"):
+            continue  # harness smoke runs, not experiments (pollute combo means)
         rec = read_json(str(f))
         if not rec or rec.get("status") != "done":
             continue

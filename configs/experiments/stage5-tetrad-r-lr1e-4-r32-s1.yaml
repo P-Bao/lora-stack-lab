@@ -1,0 +1,6 @@
+# Stage 5 TETRAD-R (plan.md Giai đoạn 5): TRIAD + BA-LoRA regularizers (GoRA init kept;
+# PiSSA never co-runs with Oi — X1). Br reg costs ~+60% wall (Br 114' vs G 68' per run).
+# LR: 2e-4 was Br's best @500 (47.5); 1e-4 = safe core shared with TRIAD.
+exp_id: stage5-tetrad-r-lr1e-4-r32-s1
+components: [G, Oi, A, Br]
+lr: 1e-4

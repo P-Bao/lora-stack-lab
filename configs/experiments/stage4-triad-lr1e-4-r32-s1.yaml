@@ -1,0 +1,6 @@
+# Stage 4 TRIAD-LoRA (plan.md Giai đoạn 4): GraLoRA + GoRA init + AltLoRA optimizer.
+# LR grid around component bests: G 1e-4 (5e-4 kills G alone: 41.0 @500), Oi 2e-4 (47.0),
+# A flat 47.5-49.5 over 2e-4..1e-2 -> 1e-4/2e-4 = safe core, 5e-4 probes the fragile edge.
+exp_id: stage4-triad-lr1e-4-r32-s1
+components: [G, Oi, A]
+lr: 1e-4
