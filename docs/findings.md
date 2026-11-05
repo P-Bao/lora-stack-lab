@@ -93,8 +93,38 @@ Chạy seeds 2/3 của `L*` → tính `σ_L` → ngưỡng Gate 1 = `max(1.0 đi
 
 ---
 
+## Stage 2 — Phiên A: singles G & Bp (2026-11-05)
+
+Fix OOM Bp lần 2 trên commit `befefbc` (chunk kernel tự `index_select` hàng fp16 từ view logits, teacher probs tính lại trong chunk dưới `no_grad` — Bẫy 12). Notebook về bản tối giản RUN_IDS-only (`3e2861b`). Reeval chạy đủ cả hai phía: Bp ngay trong phiên train (json có sẵn → nhãn combo đúng), G qua dataset `stage2-adapter` (commit `527c2bc`: chỉ merge LoRA thuần, GRALORA eval nguyên trạng).
+
+### Kết quả (GSM8K acc %, n=200, r32, s1, Qwen2.5-0.5B)
+
+| Run | acc@625 (direct) | acc@500 (reeval) | peak_mem |
+|---|---|---|---|
+| G lr1e-4 | 42.5 | **50.0** | 9.5 GiB |
+| G lr2e-4 | 45.5 | 47.0 | 9.5 GiB |
+| G lr5e-4 | 35.0 | 41.0 | 9.5 GiB |
+| Bp lr1e-4 | 41.0 | **37.5** | 11.3 GiB |
+| Bp lr2e-4 | 29.0 | 33.5 | 11.3 GiB |
+| Bp lr5e-4 | 16.0 | 18.0 | 11.3 GiB |
+
+Smoke (n=20, chỉ xác nhận pipeline + memory profile): G 45.0, Bp 30.0.
+
+### Gate 2 (improve ≥ 46.2, tie 42.8–46.2, fail < 42.8 — trên acc@500)
+
+- **G: IMPROVE** — best 50.0 ≥ 46.2 → G vào mọi combo stage3. LR tốt nhất 1e-4, thấp hơn L* (2e-4) — xác nhận quét LR riêng (D-002); 5e-4 phá G (41.0).
+- **Bp: KHÔNG QUA** — best 37.5 < 42.8 → điều tra trước khi loại (plan §5.3): Br (init GoRA thay vì PiSSA) chạy ở phiên B để quy lỗi reg-hay-init; Br cũng fail thì bổ sung single-b (3 runs) theo stage2-plan §2.2.
+
+### Suy luận phụ
+
+- Fix OOM xác nhận: peak 11578 MB (Bp) < 14.6 GiB, dư ~3 GiB; cao hơn ước tính lý thuyết 8–9 GiB nhưng an toàn.
+- G: acc@500 (50.0) > acc@625 (42.5) — cùng chiều stage1 (overfit nhẹ cuối train), chốt chuẩn acc@500.
+- Bp ngược chiều G (acc@500 < acc@625 ở lr1e-4/5e-4): nghi reg λ kéo mô hình về SVD basis sau warmup — chờ Br để quy lỗi.
+
+---
+
 ## Ghi chú quy trình
 
-- Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`).
+- Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`, `stage2/`).
 - Adapter (~336MB) không vào git — upload Kaggle Dataset `stage1-adapters`.
 - Commit code trên nhánh `main` của `lora-stack-lab`.
