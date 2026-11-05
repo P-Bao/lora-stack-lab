@@ -4,7 +4,6 @@ scan previous outputs (--skip-from) so re-attached Kaggle inputs resume cleanly.
 from __future__ import annotations
 
 import argparse
-import itertools
 import os
 import subprocess
 import sys
@@ -53,7 +52,6 @@ def main() -> int:
         print(f"[run_queue] NOTHING matched (stage={args.stage!r}, ids={args.ids}) "
               f"— available: {[p.stem for p in find_configs(args.stage, [])] or find_configs(None, [])}")
     print(f"[run_queue] {len(todo)} to run: {[p.stem for p in todo]}")
-    gpu_cycle = itertools.cycle(["0", "1"])
     running: dict[subprocess.Popen, str] = {}
     failures = 0
 
@@ -78,7 +76,9 @@ def main() -> int:
         while len(running) >= 2:  # one per T4
             reap(block=False)
             time.sleep(5)
-        gpu = next(gpu_cycle)
+        # assign a GPU that is actually free: cycle-by-start-index oversubscribed a GPU when
+        # neighbours differed by ~1 min (59.5 vs 60.5) and the probe OOM'd vs the co-tenant (trap 15)
+        gpu = next(g for g in ("0", "1") if g not in set(running.values()))
         env = {**os.environ, "CUDA_VISIBLE_DEVICES": gpu}
         p = subprocess.Popen(
             [sys.executable, "-u", str(REPO / "scripts" / "run_exp.py"), "--config", str(cfg_path),
