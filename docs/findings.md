@@ -123,6 +123,23 @@ Smoke (n=20, chỉ xác nhận pipeline + memory profile): G 45.0, Bp 30.0.
 
 ---
 
+## Stage 2 — Phiên B: A×4 xong, Oi/Br/O chết rồi fix (2026-11-05)
+
+4 run A xong trên commit `7db7a54` (trước fix). Oi×2 + Br×2 chết ở build (`KeyError: 'Oi'` — Bẫy 13), O×3 chết ở probe backward (Bẫy 14) — fix trên `a627707` (nhánh main). Reeval + collect mất ở cả 3 phiên vì ô 2 `check=True` chết tại run_queue → json A tải tay từ `/kaggle/working`. Chạy lại mọi run còn lại (Br×2 + Oi×2 + O×3, ~10 GPU-h) trên commit `fa46280`.
+
+### A — direct acc@625 (n=200, r32, s1, wall ~60–65'/run) — Gate 2 CHỜ reeval @500
+
+| Run | acc@625 |
+|---|---|
+| A lr2e-4 | **48.5** |
+| A lr5e-3 | 47.0 |
+| A lr1e-2 | 47.0 |
+| A lr1e-3 | 46.5 |
+
+Suy luận tạm: A bền LR (spread 2.0 ≈ nhiễu binomial σ≈3.5) — grid 4 giá trị của A hóa ra dư nhưng rẻ. Best 48.5 @625 cao hơn cả G (45.5) và L* (44.5 @500) → A hứa hẹn; **chốt Gate 2 phải đợi reeval @500** (upload 4 adapter A thành dataset riêng, `STAGE="reeval"`, `COMPONENTS="A"`).
+
+---
+
 ## Ghi chú quy trình
 
 - Mọi kết quả JSON/log nằm trong nhánh `results` (thư mục `stage1/`, `stage2/`).
