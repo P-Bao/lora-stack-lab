@@ -1,0 +1,348 @@
+{
+  "status": "done",
+  "step": 625,
+  "train_loss_curve": [
+    {
+      "step": 10,
+      "loss": 9.2601
+    },
+    {
+      "step": 20,
+      "loss": 1.4901
+    },
+    {
+      "step": 30,
+      "loss": 1.0899
+    },
+    {
+      "step": 40,
+      "loss": 0.9908
+    },
+    {
+      "step": 50,
+      "loss": 0.7697
+    },
+    {
+      "step": 60,
+      "loss": 0.646
+    },
+    {
+      "step": 70,
+      "loss": 0.5956
+    },
+    {
+      "step": 80,
+      "loss": 0.5816
+    },
+    {
+      "step": 90,
+      "loss": 0.3717
+    },
+    {
+      "step": 100,
+      "loss": 0.265
+    },
+    {
+      "step": 110,
+      "loss": 0.1702
+    },
+    {
+      "step": 120,
+      "loss": 0.1093
+    },
+    {
+      "step": 130,
+      "loss": 0.015
+    },
+    {
+      "step": 140,
+      "loss": 0.0367
+    },
+    {
+      "step": 150,
+      "loss": -0.037
+    },
+    {
+      "step": 160,
+      "loss": -0.0804
+    },
+    {
+      "step": 170,
+      "loss": -0.017
+    },
+    {
+      "step": 180,
+      "loss": -0.0919
+    },
+    {
+      "step": 190,
+      "loss": -0.057
+    },
+    {
+      "step": 200,
+      "loss": -0.0326
+    },
+    {
+      "step": 210,
+      "loss": -0.1629
+    },
+    {
+      "step": 220,
+      "loss": -0.0382
+    },
+    {
+      "step": 230,
+      "loss": -0.0173
+    },
+    {
+      "step": 240,
+      "loss": -0.0282
+    },
+    {
+      "step": 250,
+      "loss": -0.1247
+    },
+    {
+      "step": 260,
+      "loss": -0.0657
+    },
+    {
+      "step": 270,
+      "loss": -0.0497
+    },
+    {
+      "step": 280,
+      "loss": -0.1386
+    },
+    {
+      "step": 290,
+      "loss": -0.0216
+    },
+    {
+      "step": 300,
+      "loss": -0.1166
+    },
+    {
+      "step": 310,
+      "loss": -0.0936
+    },
+    {
+      "step": 320,
+      "loss": -0.0862
+    },
+    {
+      "step": 330,
+      "loss": -0.12
+    },
+    {
+      "step": 340,
+      "loss": -0.0921
+    },
+    {
+      "step": 350,
+      "loss": -0.0791
+    },
+    {
+      "step": 360,
+      "loss": -0.0681
+    },
+    {
+      "step": 370,
+      "loss": -0.0865
+    },
+    {
+      "step": 380,
+      "loss": -0.0443
+    },
+    {
+      "step": 390,
+      "loss": -0.0982
+    },
+    {
+      "step": 400,
+      "loss": -0.0884
+    },
+    {
+      "step": 410,
+      "loss": -0.1296
+    },
+    {
+      "step": 420,
+      "loss": -0.0453
+    },
+    {
+      "step": 430,
+      "loss": -0.1348
+    },
+    {
+      "step": 440,
+      "loss": -0.1369
+    },
+    {
+      "step": 450,
+      "loss": -0.0442
+    },
+    {
+      "step": 460,
+      "loss": -0.1881
+    },
+    {
+      "step": 470,
+      "loss": -0.1221
+    },
+    {
+      "step": 480,
+      "loss": -0.0893
+    },
+    {
+      "step": 490,
+      "loss": -0.1649
+    },
+    {
+      "step": 500,
+      "loss": -0.0548
+    },
+    {
+      "step": 510,
+      "loss": -0.1947
+    },
+    {
+      "step": 520,
+      "loss": -0.0699
+    },
+    {
+      "step": 530,
+      "loss": -0.1264
+    },
+    {
+      "step": 540,
+      "loss": -0.1232
+    },
+    {
+      "step": 550,
+      "loss": -0.1915
+    },
+    {
+      "step": 560,
+      "loss": -0.0698
+    },
+    {
+      "step": 570,
+      "loss": -0.1629
+    },
+    {
+      "step": 580,
+      "loss": -0.1338
+    },
+    {
+      "step": 590,
+      "loss": -0.1127
+    },
+    {
+      "step": 600,
+      "loss": -0.1295
+    },
+    {
+      "step": 610,
+      "loss": 0.234
+    },
+    {
+      "step": 620,
+      "loss": 0.6032
+    }
+  ],
+  "metrics": {
+    "gsm8k_acc": 0.16,
+    "n_eval": 200
+  },
+  "wall_time_s": 7973.2,
+  "peak_mem_mb": 11578,
+  "resumed_from": null,
+  "id": "stage2-Bp-lr5e-4-r32-s1",
+  "git_commit": "527c2bc1db5793b432979bea6343e6a94908f350",
+  "seed": 1,
+  "impl": {
+    "Bp": "reimpl+peft_init"
+  },
+  "init_mode": "pissa",
+  "lr": 0.0005,
+  "rank": 32,
+  "k": null,
+  "rank_per_layer": null,
+  "rank_budget_deviation": 0,
+  "config": {
+    "exp_id": "stage2-Bp-lr5e-4-r32-s1",
+    "components": [
+      "Bp"
+    ],
+    "impl": {},
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "rank": 32,
+    "gralora_k": 2,
+    "alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "gora_n_batches": 64,
+    "gora_r_min": null,
+    "gora_r_max": null,
+    "gora_gamma": null,
+    "gora_use_rslora": false,
+    "lr_ratio_ba": 1.0,
+    "altlora_momentum": 0.9,
+    "altlora_order": "B_first",
+    "altlora_variant": "altlora",
+    "altlora_ridge": 1e-06,
+    "balora_variant": "nlg",
+    "balora_lambda1": 1e-05,
+    "balora_lambda2": 0.1,
+    "balora_lambda3": 0.1,
+    "balora_distill_temp": 2.0,
+    "balora_top_k_entropy": 0,
+    "balora_svd_k": 10,
+    "balora_schedule": "spec42",
+    "balora_warmup_ratio": 0.2,
+    "balora_ramp_up_ratio": 0.05,
+    "lr": 0.0005,
+    "seed": 1,
+    "max_steps": -1,
+    "epochs": 1.0,
+    "batch_size": 8,
+    "grad_accum": 4,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.0,
+    "max_grad_norm": 1.0,
+    "fp16": true,
+    "gradient_checkpointing": true,
+    "timeguard_minutes": 630,
+    "ckpt_every_steps": 500,
+    "data": {
+      "name": "metamathqa",
+      "subset_size": 20000,
+      "seq_len": 512,
+      "eval_name": "gsm8k",
+      "eval_size": 200,
+      "eval_batch_size": 16
+    },
+    "out_dir": "/kaggle/working/results",
+    "ckpt_dir": "/kaggle/working/ckpt"
+  },
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "datasets": "4.8.5",
+    "cuda_available": true,
+    "gpu_name": "Tesla T4",
+    "gpu_count": 1,
+    "gpu_vram_total_gb": 14.6
+  },
+  "total_wall_time_s": 7991.8
+}

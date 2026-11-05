@@ -1,0 +1,58 @@
+exp_id: E0-SMOKE-Bp-qwen05b-lr2e-4-r32-s1
+components:
+- Bp
+impl: {}
+model_name: Qwen/Qwen2.5-0.5B
+rank: 32
+gralora_k: 2
+alpha: 64
+target_modules:
+- q_proj
+- k_proj
+- v_proj
+- o_proj
+- gate_proj
+- up_proj
+- down_proj
+gora_n_batches: 64
+gora_r_min: null
+gora_r_max: null
+gora_gamma: null
+gora_use_rslora: false
+lr_ratio_ba: 1.0
+altlora_momentum: 0.9
+altlora_order: B_first
+altlora_variant: altlora
+altlora_ridge: 1.0e-06
+balora_variant: nlg
+balora_lambda1: 1.0e-05
+balora_lambda2: 0.1
+balora_lambda3: 0.1
+balora_distill_temp: 2.0
+balora_top_k_entropy: 0
+balora_svd_k: 10
+balora_schedule: spec42
+balora_warmup_ratio: 0.2
+balora_ramp_up_ratio: 0.05
+lr: 0.0002
+seed: 1
+max_steps: 50
+epochs: 1.0
+batch_size: 8
+grad_accum: 4
+warmup_ratio: 0.03
+weight_decay: 0.0
+max_grad_norm: 1.0
+fp16: true
+gradient_checkpointing: true
+timeguard_minutes: 630
+ckpt_every_steps: 500
+data:
+  name: metamathqa
+  subset_size: 2000
+  seq_len: 512
+  eval_name: gsm8k
+  eval_size: 20
+  eval_batch_size: 16
+out_dir: /kaggle/working/results
+ckpt_dir: /kaggle/working/ckpt

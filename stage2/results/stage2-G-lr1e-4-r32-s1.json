@@ -1,0 +1,348 @@
+{
+  "status": "done",
+  "step": 625,
+  "train_loss_curve": [
+    {
+      "step": 10,
+      "loss": 0.5434
+    },
+    {
+      "step": 20,
+      "loss": 0.5202
+    },
+    {
+      "step": 30,
+      "loss": 0.5322
+    },
+    {
+      "step": 40,
+      "loss": 0.504
+    },
+    {
+      "step": 50,
+      "loss": 0.5098
+    },
+    {
+      "step": 60,
+      "loss": 0.5105
+    },
+    {
+      "step": 70,
+      "loss": 0.5219
+    },
+    {
+      "step": 80,
+      "loss": 0.5514
+    },
+    {
+      "step": 90,
+      "loss": 0.5185
+    },
+    {
+      "step": 100,
+      "loss": 0.5477
+    },
+    {
+      "step": 110,
+      "loss": 0.5029
+    },
+    {
+      "step": 120,
+      "loss": 0.5331
+    },
+    {
+      "step": 130,
+      "loss": 0.5089
+    },
+    {
+      "step": 140,
+      "loss": 0.4953
+    },
+    {
+      "step": 150,
+      "loss": 0.4781
+    },
+    {
+      "step": 160,
+      "loss": 0.5007
+    },
+    {
+      "step": 170,
+      "loss": 0.5038
+    },
+    {
+      "step": 180,
+      "loss": 0.5352
+    },
+    {
+      "step": 190,
+      "loss": 0.4865
+    },
+    {
+      "step": 200,
+      "loss": 0.496
+    },
+    {
+      "step": 210,
+      "loss": 0.4999
+    },
+    {
+      "step": 220,
+      "loss": 0.4996
+    },
+    {
+      "step": 230,
+      "loss": 0.5226
+    },
+    {
+      "step": 240,
+      "loss": 0.5241
+    },
+    {
+      "step": 250,
+      "loss": 0.5182
+    },
+    {
+      "step": 260,
+      "loss": 0.4857
+    },
+    {
+      "step": 270,
+      "loss": 0.5064
+    },
+    {
+      "step": 280,
+      "loss": 0.5044
+    },
+    {
+      "step": 290,
+      "loss": 0.4973
+    },
+    {
+      "step": 300,
+      "loss": 0.5042
+    },
+    {
+      "step": 310,
+      "loss": 0.4929
+    },
+    {
+      "step": 320,
+      "loss": 0.4793
+    },
+    {
+      "step": 330,
+      "loss": 0.4826
+    },
+    {
+      "step": 340,
+      "loss": 0.46
+    },
+    {
+      "step": 350,
+      "loss": 0.4983
+    },
+    {
+      "step": 360,
+      "loss": 0.4976
+    },
+    {
+      "step": 370,
+      "loss": 0.5171
+    },
+    {
+      "step": 380,
+      "loss": 0.5147
+    },
+    {
+      "step": 390,
+      "loss": 0.4944
+    },
+    {
+      "step": 400,
+      "loss": 0.5017
+    },
+    {
+      "step": 410,
+      "loss": 0.4847
+    },
+    {
+      "step": 420,
+      "loss": 0.5012
+    },
+    {
+      "step": 430,
+      "loss": 0.5071
+    },
+    {
+      "step": 440,
+      "loss": 0.487
+    },
+    {
+      "step": 450,
+      "loss": 0.5181
+    },
+    {
+      "step": 460,
+      "loss": 0.5075
+    },
+    {
+      "step": 470,
+      "loss": 0.4929
+    },
+    {
+      "step": 480,
+      "loss": 0.5337
+    },
+    {
+      "step": 490,
+      "loss": 0.529
+    },
+    {
+      "step": 500,
+      "loss": 0.4806
+    },
+    {
+      "step": 510,
+      "loss": 0.4923
+    },
+    {
+      "step": 520,
+      "loss": 0.4856
+    },
+    {
+      "step": 530,
+      "loss": 0.5121
+    },
+    {
+      "step": 540,
+      "loss": 0.5329
+    },
+    {
+      "step": 550,
+      "loss": 0.474
+    },
+    {
+      "step": 560,
+      "loss": 0.496
+    },
+    {
+      "step": 570,
+      "loss": 0.474
+    },
+    {
+      "step": 580,
+      "loss": 0.4701
+    },
+    {
+      "step": 590,
+      "loss": 0.5058
+    },
+    {
+      "step": 600,
+      "loss": 0.5
+    },
+    {
+      "step": 610,
+      "loss": 0.485
+    },
+    {
+      "step": 620,
+      "loss": 0.4909
+    }
+  ],
+  "metrics": {
+    "gsm8k_acc": 0.425,
+    "n_eval": 200
+  },
+  "wall_time_s": 4121.4,
+  "peak_mem_mb": 9730,
+  "resumed_from": null,
+  "id": "stage2-G-lr1e-4-r32-s1",
+  "git_commit": "f9df7a33f4a2d72b6bed0ac7729ef54d97aaeb8d",
+  "seed": 1,
+  "impl": {
+    "G": "peft"
+  },
+  "init_mode": "default",
+  "lr": 0.0001,
+  "rank": 32,
+  "k": 2,
+  "rank_per_layer": null,
+  "rank_budget_deviation": 0,
+  "config": {
+    "exp_id": "stage2-G-lr1e-4-r32-s1",
+    "components": [
+      "G"
+    ],
+    "impl": {},
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "rank": 32,
+    "gralora_k": 2,
+    "alpha": 64,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "gora_n_batches": 64,
+    "gora_r_min": null,
+    "gora_r_max": null,
+    "gora_gamma": null,
+    "gora_use_rslora": false,
+    "lr_ratio_ba": 1.0,
+    "altlora_momentum": 0.9,
+    "altlora_order": "B_first",
+    "altlora_variant": "altlora",
+    "altlora_ridge": 1e-06,
+    "balora_variant": "nlg",
+    "balora_lambda1": 1e-05,
+    "balora_lambda2": 0.1,
+    "balora_lambda3": 0.1,
+    "balora_distill_temp": 2.0,
+    "balora_top_k_entropy": 0,
+    "balora_svd_k": 10,
+    "balora_schedule": "spec42",
+    "balora_warmup_ratio": 0.2,
+    "balora_ramp_up_ratio": 0.05,
+    "lr": 0.0001,
+    "seed": 1,
+    "max_steps": -1,
+    "epochs": 1.0,
+    "batch_size": 8,
+    "grad_accum": 4,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.0,
+    "max_grad_norm": 1.0,
+    "fp16": true,
+    "gradient_checkpointing": true,
+    "timeguard_minutes": 630,
+    "ckpt_every_steps": 500,
+    "data": {
+      "name": "metamathqa",
+      "subset_size": 20000,
+      "seq_len": 512,
+      "eval_name": "gsm8k",
+      "eval_size": 200,
+      "eval_batch_size": 16
+    },
+    "out_dir": "/kaggle/working/results",
+    "ckpt_dir": "/kaggle/working/ckpt"
+  },
+  "env": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "datasets": "4.8.5",
+    "cuda_available": true,
+    "gpu_name": "Tesla T4",
+    "gpu_count": 1,
+    "gpu_vram_total_gb": 14.6
+  },
+  "total_wall_time_s": 4128.4
+}
