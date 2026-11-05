@@ -250,3 +250,35 @@ def test_t5b_oi_standalone_runs_own_probe():
     assert gora_alloc._PASS_COUNT == p0 + 1  # exactly one own probe pass
     assert set(gora_alloc.get_cached_grads()) == set(TARGETS)
     assert ctx.init_mode == "gora"
+
+
+# ---------------------------------------------------------------- T6: regression (Kaggle session B, 2026-11-05)
+
+def test_t6_oi_self_registers_in_registry():
+    """B1 killed both Oi runs (and Br, whose yaml lists Oi first): gora_init defined
+    init_adapter but never register()ed it -> get_hooks('Oi') raised KeyError."""
+    from lorastack.registry import get_hooks
+
+    assert callable(get_hooks("Oi").init_adapter)
+
+
+def test_t6b_probe_backward_survives_nonreentrant_checkpointing():
+    """B3 killed all O runs: the probe runs on the adapter-free base model AFTER
+    gradient_checkpointing_enable(); reentrant checkpointing drops the graph when no
+    INPUT requires grad (frozen embeddings) -> 'element 0 of tensors does not require
+    grad'. Pipeline now enables non-reentrant; pin that the probe works under it."""
+    import torch.utils.checkpoint as cp
+
+    class CkptTiny(Tiny):
+        def forward(self, input_ids=None, labels=None, **kw):
+            h = input_ids.float().unsqueeze(-1).expand(-1, -1, DIMS["q_proj"][0])
+            for mod in self.children():
+                h = cp.checkpoint(mod, h, use_reentrant=False)
+            return SimpleNamespace(loss=((h - labels.float().unsqueeze(-1)) ** 2).mean())
+
+    torch.manual_seed(0)
+    gora_alloc._G_CACHE.clear()
+    cfg = _cfg(components=["O"], rank=8, alpha=16, gora_n_batches=2)
+    G = gora_alloc._accumulate_grads(cfg, CkptTiny(), _loader())
+    assert set(G) == set(TARGETS)
+    assert all(torch.isfinite(v).all() and v.abs().sum() > 0 for v in G.values())

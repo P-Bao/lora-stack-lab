@@ -69,7 +69,10 @@ def build(cfg: ExpConfig):
         attn_implementation="sdpa",  # T4: no flash-attn
     )
     if cfg.gradient_checkpointing:
-        model.gradient_checkpointing_enable()
+        # non-reentrant: the O/Oi probe backward runs on the BASE model (frozen inputs) before
+        # any adapter exists — reentrant checkpointing drops the graph there ("element 0 of
+        # tensors does not require grad"). Non-reentrant flows grads via params; same math.
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
         model.config.use_cache = False  # else transformers sets it on the first forward + warns every run
     if torch.cuda.is_available():
         model.to("cuda")  # explicit: from_pretrained stays on CPU without device_map

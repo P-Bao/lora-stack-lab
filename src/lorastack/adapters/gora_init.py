@@ -146,3 +146,6 @@ def init_adapter(cfg, model, ctx) -> None:
     # TODO(D-002.1): user pinned alpha/r for ALL configs; cfg.gora_use_rslora stays an ablation
     # flag. xi reads the adapter's actual scaling (spec 6.4), so an rslora ablation run needs no
     # code change here (xi becomes gamma*sqrt(n)/alpha automatically). Nothing else pending.
+
+
+register("Oi", init_adapter=init_adapter)
